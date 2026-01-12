@@ -1,26 +1,122 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 4.5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 263.4 100% 70%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --accent-cyan: 190 100% 50%;
+    --accent-pink: 330 100% 60%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+
+    --radius: 0.5rem;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Scrollbar */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-secondary rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/50;
+  }
+}
+
+/* React Big Calendar Overrides for Cyberpunk Theme */
+.rbc-calendar {
+    font-family: var(--font-sans);
+}
+
+.rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+    @apply border-white/20; /* Increased contrast */
+}
+
+.rbc-header {
+    @apply text-white font-semibold border-white/20 py-2 uppercase tracking-wider text-xs; /* Brighter text */
+}
+
+.rbc-off-range-bg {
+    @apply bg-black/60; /* Darker off-range to pop active days */
+}
+
+.rbc-month-row, .rbc-day-bg, .rbc-time-header-content {
+    @apply border-white/20;
+}
+
+.rbc-today {
+    @apply bg-primary/20 border border-primary/50 !important; /* Stronger highlight */
+}
+
+.rbc-event {
+    @apply bg-transparent p-0 outline-none focus:outline-none !important;
+}
+
+.rbc-time-content {
+    @apply border-white/20;
+}
+.rbc-timeslot-group {
+    @apply border-white/20;
+}
+.rbc-time-gutter .rbc-timeslot-group {
+    @apply border-white/20;
+}
+.rbc-label {
+    @apply text-muted-foreground text-xs font-medium;
+}
+.rbc-day-slot .rbc-background-event {
+   @apply border-primary/20 bg-primary/10;
+}
+.rbc-current-time-indicator {
+    @apply bg-accent-cyan h-[2px] shadow-[0_0_5px_theme(colors.cyan.400)];
 }

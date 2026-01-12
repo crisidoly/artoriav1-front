@@ -1,0 +1,136 @@
+"use client";
+
+import { api, ApiResponse } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import React, { createContext, useContext, useEffect } from "react";
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  integrations?: {
+      google?: boolean;
+      github?: boolean;
+      notion?: boolean;
+      trello?: boolean;
+  };
+}
+
+interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => void;
+  checkAuth: () => Promise<void>;
+  connectIntegration: (provider: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthState | undefined>(undefined);
+
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = ["/login", "/register", "/landing"];
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const queryClient = useQueryClient();
+
+  // Fetch Auth Status
+  const { data: user, isLoading, error, refetch } = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      try {
+        const res = await api.get<ApiResponse<User>>("/api/auth/status");
+        // Expecting { success: true, data: User } or { authenticated: true, user: User }
+        // Adjust based on actual backend response structure.
+        // Assuming backend returns user object explicitly if authenticated.
+        if (res.data?.data) return res.data.data;
+        if ((res.data as any).user) return (res.data as any).user;
+        return null;
+      } catch (err) {
+        return null; 
+      }
+    },
+    retry: false, // Don't retry 401s
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
+
+  const isAuthenticated = !!user;
+
+  // Protect Routes
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
+        // Redirect to login if not public
+        // For now, we might not have a login page, so we keep it loose 
+        // OR define a login entry point.
+        // console.warn("User not authenticated, redirecting...");
+        // router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, pathname, router]);
+
+  const login = () => {
+    // Redirect to Google Auth
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/google`;
+  };
+
+  const connectIntegration = async (provider: string) => {
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/${provider}`;
+      const width = 500;
+      const height = 600;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+      
+      const popup = window.open(
+          url, 
+          `${provider}-auth`, 
+          `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (popup) {
+          const timer = setInterval(() => {
+              if (popup.closed) {
+                  clearInterval(timer);
+                  // Refresh auth status when popup closes
+                  refetch();
+              }
+          }, 1000);
+      }
+  };
+
+  const logout = async () => {
+    try {
+      await api.post("/api/auth/logout");
+      queryClient.setQueryData(["auth-user"], null);
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user: user || null,
+        isLoading,
+        isAuthenticated,
+        login,
+        logout,
+        checkAuth: async () => { await refetch(); },
+        connectIntegration,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
