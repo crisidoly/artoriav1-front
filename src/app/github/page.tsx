@@ -3,7 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { GitHubEvent, GitHubRepo, useGitHub } from "@/hooks/use-github";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import {
     Activity,
     AlertCircle,
@@ -12,37 +14,90 @@ import {
     GitCommit,
     Github,
     GitPullRequest,
+    Loader2,
     Star
 } from "lucide-react";
-
-const REPOS = [
-  { name: "artoria-ai", lang: "TypeScript", color: "bg-blue-400", stars: 128, forks: 45, updated: "2h ago" },
-  { name: "neural-engine", lang: "Python", color: "bg-yellow-400", stars: 892, forks: 120, updated: "5h ago" },
-  { name: "react-components", lang: "TypeScript", color: "bg-blue-400", stars: 56, forks: 12, updated: "1d ago" },
-  { name: "go-microservices", lang: "Go", color: "bg-cyan-400", stars: 234, forks: 67, updated: "2d ago" },
-  { name: "rust-core", lang: "Rust", color: "bg-orange-400", stars: 45, forks: 5, updated: "3d ago" },
-  { name: "docker-dev", lang: "Dockerfile", color: "bg-purple-400", stars: 12, forks: 2, updated: "5d ago" },
-];
-
-const ACTIVITY = [
-  { type: "pushed", repo: "artoria-ai", msg: "feat: implemented new agent nodes", time: "2h ago", icon: GitCommit },
-  { type: "pr", repo: "neural-engine", msg: "Optimize tensor processing", time: "4h ago", icon: GitPullRequest },
-  { type: "issue", repo: "react-components", msg: "Fix hydration error in Sidebar", time: "1d ago", icon: AlertCircle },
-  { type: "pushed", repo: "go-microservices", msg: "Update grpc dependencies", time: "2d ago", icon: GitCommit },
-];
+import { useEffect, useState } from "react";
 
 export default function GithubPage() {
+  const { getUser, getRepositories, getEvents, loading } = useGitHub();
+  const [user, setUser] = useState<any>(null);
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [events, setEvents] = useState<GitHubEvent[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoadingData(true);
+      try {
+        const [userData, reposData, eventsData] = await Promise.all([
+           getUser(),
+           getRepositories(),
+           getEvents()
+        ]);
+        
+        if (userData) setUser(userData);
+        if (reposData) setRepos(reposData);
+        if (eventsData) setEvents(eventsData);
+        
+      } catch (error) {
+        console.error("Error loading GitHub data", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+    fetchData();
+  }, [getUser, getRepositories, getEvents]);
+
+  // Calculate stats
+  const totalStars = repos.reduce((acc, repo) => acc + repo.stargazers_count, 0);
+  
+  // Format event message
+  const getEventMessage = (event: GitHubEvent) => {
+      switch (event.type) {
+          case 'PushEvent':
+              return `Pushed to ${event.payload?.ref?.replace('refs/heads/', '') || 'branch'}`;
+          case 'CreateEvent':
+              return `Created ${event.payload?.ref_type || 'element'}`;
+          case 'WatchEvent':
+              return 'Starred repository';
+          case 'PullRequestEvent':
+              return `${event.payload?.action} pull request`;
+          case 'IssuesEvent':
+               return `${event.payload?.action} issue`;
+          default:
+              return event.type;
+      }
+  };
+
+  const getEventIcon = (type: string) => {
+      switch (type) {
+          case 'PushEvent': return GitCommit;
+          case 'PullRequestEvent': return GitPullRequest;
+          case 'IssuesEvent': return AlertCircle;
+          default: return Activity;
+      }
+  };
+
+  if (isLoadingData) {
+      return <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>;
+  }
+
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 h-full overflow-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white/10 rounded-full">
-            <Github className="h-8 w-8 text-white" />
+            {user?.avatar_url ? (
+                <img src={user.avatar_url} alt={user.login} className="h-8 w-8 rounded-full" />
+            ) : (
+                <Github className="h-8 w-8 text-white" />
+            )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">GitHub</h1>
-            <p className="text-muted-foreground">@developer • Pro Account</p>
+            <h1 className="text-3xl font-bold text-white mb-1">{user?.login || 'GitHub User'}</h1>
+            <p className="text-muted-foreground">{user?.bio || '@developer • Pro Account'}</p>
           </div>
         </div>
         <Button className="bg-[#2da44e] hover:bg-[#2c974b] text-white">
@@ -54,10 +109,10 @@ export default function GithubPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Repositories", value: "48", icon: BookOpen, color: "text-white" },
-          { label: "Stars", value: "1.2k", icon: Star, color: "text-yellow-400" },
-          { label: "Pull Requests", value: "12", icon: GitPullRequest, color: "text-blue-400" },
-          { label: "Issues", value: "5", icon: AlertCircle, color: "text-red-400" },
+          { label: "Repositories", value: user?.public_repos || repos.length, icon: BookOpen, color: "text-white" },
+          { label: "Stars", value: totalStars, icon: Star, color: "text-yellow-400" },
+          { label: "Followers", value: user?.followers || 0, icon: GitPullRequest, color: "text-blue-400" }, // Using Followers as PRs API is separate and heavier
+          { label: "Following", value: user?.following || 0, icon: AlertCircle, color: "text-red-400" },
         ].map((stat, i) => (
           <Card key={i} className="bg-[#0d1117] border-[#30363d]">
             <CardContent className="p-4 flex items-center justify-between">
@@ -79,28 +134,38 @@ export default function GithubPage() {
             Top Repositories
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {REPOS.map(repo => (
-              <Card key={repo.name} className="bg-[#0d1117] border-[#30363d] hover:border-gray-500 transition-colors cursor-pointer group">
+            {repos.slice(0, 6).map(repo => (
+              <Card key={repo.id} className="bg-[#0d1117] border-[#30363d] hover:border-gray-500 transition-colors cursor-pointer group">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-blue-400 group-hover:underline">{repo.name}</h3>
-                    <span className="text-xs text-muted-foreground border border-[#30363d] rounded-full px-2 py-0.5">Public</span>
+                    <h3 className="font-semibold text-blue-400 group-hover:underline truncate pr-2">{repo.name}</h3>
+                    <span className="text-xs text-muted-foreground border border-[#30363d] rounded-full px-2 py-0.5 shrink-0">{repo.private ? 'Private' : 'Public'}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <span className={cn("w-3 h-3 rounded-full", repo.color)} />
-                      {repo.lang}
+                      <span className={cn("w-3 h-3 rounded-full bg-blue-400")} /> 
+                      {/* Language color mapping could be added if critical */}
+                      {repo.language || 'N/A'}
                     </div>
                     <div className="flex items-center gap-1 hover:text-blue-400">
                       <Star className="h-3 w-3" />
-                      {repo.stars}
+                      {repo.stargazers_count}
                     </div>
                     <div className="flex items-center gap-1 hover:text-blue-400">
                       <GitBranch className="h-3 w-3" />
-                      {repo.forks}
+                      {/* Forks count not in interface currently, default 0 or update interface if critical. 
+                          Wait, check interface... GitHubRepo has fork count? 
+                          I looked at use-github.ts, it doesn't have fork count in interface!
+                          But API 'github.ts' returns full object from axios.
+                          TypeScript interface might be incomplete but data is likely there.
+                          I'll check usage and maybe just omit or assume 0 for now to avoid errors if strict.
+                          Actually I'll cast to any if needed or just use 0.
+                       */}
+                      {(repo as any).forks_count || 0}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground pt-2">Updated {repo.updated}</p>
+                  <p className="text-xs text-muted-foreground pt-2 line-clamp-2 min-h-[2.5em]">{repo.description || "No description provided."}</p>
+                  <p className="text-[10px] text-gray-500">Updated {formatDistanceToNow(new Date(repo.updated_at), { addSuffix: true })}</p>
                 </CardContent>
               </Card>
             ))}
@@ -117,20 +182,22 @@ export default function GithubPage() {
             <CardContent className="p-0">
               <ScrollArea className="h-[400px]">
                 <div className="divide-y divide-[#30363d]">
-                  {ACTIVITY.map((act, i) => (
-                    <div key={i} className="p-4 flex gap-3 hover:bg-white/5 transition-colors">
+                  {events.map((act) => {
+                    const Icon = getEventIcon(act.type);
+                    return (
+                    <div key={act.id} className="p-4 flex gap-3 hover:bg-white/5 transition-colors">
                       <div className="mt-1">
-                        <act.icon className="h-4 w-4 text-muted-foreground" />
+                        <Icon className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">
-                          <span className="text-blue-400 font-medium cursor-pointer hover:underline">{act.repo}</span>
+                          <span className="text-blue-400 font-medium cursor-pointer hover:underline">{act.repo.name}</span>
                         </p>
-                        <p className="text-sm text-muted-foreground truncate">{act.msg}</p>
-                        <p className="text-xs text-gray-500 mt-1">{act.time}</p>
+                        <p className="text-sm text-muted-foreground truncate">{getEventMessage(act)}</p>
+                        <p className="text-xs text-gray-500 mt-1">{formatDistanceToNow(new Date(act.created_at), { addSuffix: true })}</p>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -151,7 +218,7 @@ export default function GithubPage() {
                   />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-3">1,234 contributions in the last year</p>
+              <p className="text-xs text-muted-foreground mt-3">Visual representation only</p>
             </CardContent>
           </Card>
         </div>

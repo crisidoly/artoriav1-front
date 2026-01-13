@@ -77,7 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const connectIntegration = async (provider: string) => {
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/${provider}`;
+      // ✅ Use the new callback page
+      const callbackPath = '/auth/callback'; 
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/${provider}?callbackUrl=${encodeURIComponent(callbackPath)}`;
+      
       const width = 500;
       const height = 600;
       const left = window.screen.width / 2 - width / 2;
@@ -89,11 +92,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           `width=${width},height=${height},left=${left},top=${top}`
       );
 
+      // ✅ Listen for message from popup
+      const messageHandler = async (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data?.type === 'OAUTH_SUCCESS') {
+           console.log("✅ [AuthContext] Received OAuth Success Message:", event.data);
+           
+           // Force refresh user data immediately
+           await refetch();
+           
+           // Cleanup
+           window.removeEventListener('message', messageHandler);
+        }
+      };
+
+      window.addEventListener('message', messageHandler);
+
       if (popup) {
           const timer = setInterval(() => {
               if (popup.closed) {
                   clearInterval(timer);
-                  // Refresh auth status when popup closes
+                  window.removeEventListener('message', messageHandler);
+                  // Backup refresh in case message was missed (e.g. manual close)
                   refetch();
               }
           }, 1000);

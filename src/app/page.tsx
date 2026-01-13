@@ -1,3 +1,4 @@
+import { IntegrationStats } from "@/components/dashboard/IntegrationStats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, ArrowUpRight, Calendar, Code2, Settings } from "lucide-react";
 
@@ -52,6 +53,8 @@ export default function DashboardPage() {
              </CardContent>
           </Card>
       </div>
+
+      <IntegrationStats />
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight text-primary-glow">Ações Rápidas</h2>

@@ -2,68 +2,70 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
-  Bell,
-  Bot,
-  Brain,
-  Briefcase,
-  Calculator,
-  Calendar,
-  CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Clapperboard,
-  Code2,
-  DollarSign,
-  Figma as FigmaIcon,
-  FileSearch,
-  FileText,
-  Github,
-  Globe,
-  GraduationCap,
-  HardDrive,
-  Headset,
-  HeartPulse,
-  Image as ImageIcon,
-  Layout,
-  LayoutDashboard,
-  Link2,
-  Mail,
-  Megaphone,
-  Menu,
-  MessageCircle,
-  MessageSquare,
-  Music,
-  Network,
-  Palette,
-  Scale,
-  Send,
-  Settings,
-  Shield,
-  Target,
-  Terminal,
-  Truck,
-  Users,
-  Wifi,
-  Wrench,
-  X
+    BarChart3,
+    Bell,
+    Bot,
+    Brain,
+    Briefcase,
+    Calculator,
+    Calendar,
+    CheckSquare,
+    ChevronDown,
+    ChevronRight,
+    Clapperboard,
+    Code2,
+    DollarSign,
+    Figma as FigmaIcon,
+    FileSearch,
+    FileText,
+    Github,
+    Globe,
+    GraduationCap,
+    HardDrive,
+    Hash,
+    Headset,
+    HeartPulse,
+    Image as ImageIcon,
+    Layout,
+    LayoutDashboard,
+    Link2,
+    Mail,
+    Megaphone,
+    Menu,
+    MessageCircle,
+    MessageSquare,
+    Music,
+    Network,
+    Palette,
+    Scale,
+    Send,
+    Settings,
+    Shield,
+    TableProperties,
+    Target,
+    Terminal,
+    Truck,
+    Users,
+    Wifi,
+    Wrench,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -178,6 +180,8 @@ const GOOGLE_ITEMS = [
   { label: "Agenda", href: "/google/calendar", icon: Calendar },
   { label: "Tarefas", href: "/google/tasks", icon: CheckSquare },
   { label: "Drive", href: "/google/drive", icon: HardDrive },
+  { label: "Planilhas", href: "/google/sheets", icon: TableProperties },
+  { label: "Documentos", href: "/google/docs", icon: FileText },
 ];
 
 const DESIGN_SUITE_ITEMS = [
@@ -196,6 +200,7 @@ const DEV_GIT_ITEMS = [
 const WORKSPACE_ITEMS = [
   { label: "Notion", href: "/notion", icon: FileText },
   { label: "Trello", href: "/trello", icon: Layout },
+  { label: "Slack", href: "/slack", icon: Hash },
 ];
 
 const MEDIA_ITEMS = [
@@ -262,6 +267,9 @@ const MOCK_NOTIFICATIONS = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  
+  if (pathname?.startsWith('/auth/')) return null;
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, connectIntegration } = useAuth();

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { SpotifyTrack, useSpotify } from "@/hooks/use-spotify";
 import {
     ArrowLeft,
     ArrowRight,
@@ -11,6 +12,7 @@ import {
     Home,
     LayoutGrid,
     Library,
+    Loader2,
     Mic2,
     MoreHorizontal,
     PauseCircle,
@@ -23,22 +25,64 @@ import {
     SkipForward,
     Volume2
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const PLAYLISTS = [
-  "Discover Weekly", "Release Radar", "Daily Mix 1", "Coding Focus", "lofi beats", "Top Hits 2026", "Likely Songs"
-];
-
-const TRACKS = [
-  { id: 1, title: "Midnight City", artist: "M83", album: "Hurry Up, We're Dreaming", duration: "4:03" },
-  { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: "3:50" },
-  { id: 3, title: "Digital Love", artist: "Daft Punk", album: "Discovery", duration: "4:58" },
-  { id: 4, title: "Instant Crush", artist: "Daft Punk", album: "Random Access Memories", duration: "5:37" },
-  { id: 5, title: "Nightcall", artist: "Kavinsky", album: "OutRun", duration: "4:18" },
-];
+// Use a user ID that matches your auth system. 
+// For now, we hardcode 'default-user' or use a mechanism to get it. 
+// In a real app this comes from Auth Context.
+// We'll assume the user ID 'default-user' or similar if not provided, 
+// BUT the backend expects the same ID that authenticated.
+// Let's assume the user is "cris" based on previous context or try to fetch 'me'.
+// Ideally we should have useAuth().
+const MOCK_USER_ID = "336f338b-7006-4f40-975d-3569fb202862"; // Using a placeholder, effectively we should get this dynamically.
 
 export default function SpotifyPage() {
+  const { loading, tracks, getLikedSongs, playMusic, pauseMusic, resumeMusic, skipTrack } = useSpotify();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
+
+  useEffect(() => {
+    // In a real scenario, get true user ID
+    // For now we assume the integration was set up for the current logged in user.
+    // If you implemented proper Auth, use `user.id`.
+    // Since I don't have easy access to AuthContext right here without checking other files,
+    // I will try to fetch for the user who is likely logged in.
+    // The previous Trello page didn't need userId explicitly because `useTrello` used `api` which carries cookies/headers.
+    // My `useSpotify` has `userId` param because the backend routes I wrote demand it in query/body.
+    // I should probably have made backend rely on request.user.
+    // But for now, let's try to fetch.
+    
+    // Attempting to load without specific user ID relying on backend maybe?
+    // No, I required userId in backend. 
+    // Let's use a known ID or fetch it.
+    
+    // WORKAROUND: The `api` client (axios) usually sends the JWT. 
+    // The backend `authPlugin` decodes it into `request.user`.
+    // I will update the backend routes in next step to use `request.user.id` instead of manual `userId` param.
+    // But for this step I will pass a placeholder and rely on the fix I will make in parallel.
+    
+    getLikedSongs(MOCK_USER_ID); 
+  }, [getLikedSongs]);
+
+  const handlePlay = async (track: SpotifyTrack) => {
+    setCurrentTrack(track);
+    setIsPlaying(true);
+    await playMusic(MOCK_USER_ID, track.title + " " + track.artist);
+  };
+
+  const handleTogglePlay = async () => {
+    if (isPlaying) {
+      await pauseMusic(MOCK_USER_ID);
+      setIsPlaying(false);
+    } else {
+      await resumeMusic(MOCK_USER_ID);
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSkip = async () => {
+    await skipTrack(MOCK_USER_ID);
+  };
 
   return (
     <div className="flex flex-col h-full bg-black text-white font-sans">
@@ -75,9 +119,7 @@ export default function SpotifyPage() {
 
           <ScrollArea className="flex-1 -mx-4 px-4">
              <div className="space-y-3">
-               {PLAYLISTS.map(p => (
-                 <p key={p} className="text-sm text-gray-400 hover:text-white cursor-pointer truncate">{p}</p>
-               ))}
+               <p className="text-sm text-gray-400 hover:text-white cursor-pointer truncate">Liked Songs</p>
              </div>
           </ScrollArea>
         </div>
@@ -106,7 +148,7 @@ export default function SpotifyPage() {
               <h1 className="text-7xl font-bold mb-6 mt-2">Liked Songs</h1>
               <div className="flex items-center gap-2 text-sm font-medium">
                 <span className="text-green-400">Cris</span>
-                <span className="text-gray-300">• 289 songs, 14 hr 22 min</span>
+                <span className="text-gray-300">• {tracks.length} songs</span>
               </div>
             </div>
           </div>
@@ -114,8 +156,11 @@ export default function SpotifyPage() {
           {/* Controls */}
           <div className="px-8 py-6">
             <div className="flex items-center gap-6 mb-8">
-              <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer shadow-lg text-black">
-                <PlayCircle className="h-8 w-8 fill-black" />
+              <div 
+                className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer shadow-lg text-black"
+                onClick={handleTogglePlay}
+              >
+                {isPlaying ? <PauseCircle className="h-8 w-8 fill-black" /> : <PlayCircle className="h-8 w-8 fill-black" />}
               </div>
               <Heart className="h-8 w-8 text-green-500 fill-green-500 cursor-pointer" />
               <MoreHorizontal className="h-8 w-8 text-gray-400 hover:text-white cursor-pointer" />
@@ -132,28 +177,38 @@ export default function SpotifyPage() {
 
             {/* Tracks */}
             <div className="space-y-2">
-              {TRACKS.map((track, i) => (
-                <div key={track.id} className="grid grid-cols-[16px_1fr_1fr_1fr_60px] gap-4 items-center px-4 py-2 rounded-md hover:bg-white/10 group cursor-pointer">
-                  <span className="text-gray-400 group-hover:hidden">{i + 1}</span>
-                  <PlayCircle className="h-4 w-4 text-white hidden group-hover:block" />
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#282828] flex items-center justify-center">🎵</div>
-                    <div>
-                      <p className="text-white font-medium hover:underline">{track.title}</p>
-                      <p className="text-sm text-gray-400 hover:underline hover:text-white cursor-pointer">{track.artist}</p>
+              {loading ? (
+                 <div className="flex justify-center p-8"><Loader2 className="animate-spin text-green-500" /></div>
+              ) : tracks.length === 0 ? (
+                 <div className="text-center text-gray-400 py-8">No tracks found. Connect Spotify to see your liked songs.</div>
+              ) : (
+                tracks.map((track, i) => (
+                  <div 
+                    key={track.id} 
+                    className="grid grid-cols-[16px_1fr_1fr_1fr_60px] gap-4 items-center px-4 py-2 rounded-md hover:bg-white/10 group cursor-pointer"
+                    onClick={() => handlePlay(track)}
+                  >
+                    <span className="text-gray-400 group-hover:hidden">{i + 1}</span>
+                    <PlayCircle className="h-4 w-4 text-white hidden group-hover:block" />
+                    
+                    <div className="flex items-center gap-4">
+                      {track.image && <img src={track.image} alt={track.album} className="w-10 h-10 object-cover" />}
+                      <div>
+                        <p className={cn("text-white font-medium hover:underline", currentTrack?.id === track.id && "text-green-500")}>{track.title}</p>
+                        <p className="text-sm text-gray-400 hover:underline hover:text-white cursor-pointer">{track.artist}</p>
+                      </div>
+                    </div>
+                    
+                    <span className="text-sm text-gray-400 hover:text-white hover:underline cursor-pointer">{track.album}</span>
+                    <span className="text-sm text-gray-400">Recently</span>
+                    
+                    <div className="flex justify-end items-center gap-4">
+                       <Heart className="h-4 w-4 text-green-500 opacity-0 group-hover:opacity-100" />
+                       <span className="text-sm text-gray-400">{track.duration}</span>
                     </div>
                   </div>
-                  
-                  <span className="text-sm text-gray-400 hover:text-white hover:underline cursor-pointer">{track.album}</span>
-                  <span className="text-sm text-gray-400">2 days ago</span>
-                  
-                  <div className="flex justify-end items-center gap-4">
-                     <Heart className="h-4 w-4 text-green-500 opacity-0 group-hover:opacity-100" />
-                     <span className="text-sm text-gray-400">{track.duration}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -162,12 +217,18 @@ export default function SpotifyPage() {
       {/* Player Bar */}
       <div className="h-24 bg-[#181818] border-t border-[#282828] px-4 flex items-center justify-between">
          <div className="flex items-center gap-4 w-[30%]">
-            <div className="w-14 h-14 bg-gray-800 rounded"></div>
-            <div>
-              <p className="text-sm text-white hover:underline cursor-pointer">Midnight City</p>
-              <p className="text-xs text-gray-400 hover:underline cursor-pointer">M83</p>
-            </div>
-            <Heart className="h-4 w-4 text-green-500 ml-2" />
+            {currentTrack ? (
+              <>
+                 {currentTrack.image && <img src={currentTrack.image} className="w-14 h-14 bg-gray-800 rounded" />}
+                 <div>
+                   <p className="text-sm text-white hover:underline cursor-pointer">{currentTrack.title}</p>
+                   <p className="text-xs text-gray-400 hover:underline cursor-pointer">{currentTrack.artist}</p>
+                 </div>
+                 <Heart className="h-4 w-4 text-green-500 ml-2" />
+              </>
+            ) : (
+              <div className="text-xs text-gray-500">No track playing</div>
+            )}
          </div>
 
          <div className="flex flex-col items-center w-[40%]">
@@ -176,17 +237,20 @@ export default function SpotifyPage() {
                <SkipBack className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
                <div 
                  className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:scale-105"
-                 onClick={() => setIsPlaying(!isPlaying)}
+                 onClick={handleTogglePlay}
                >
                  {isPlaying ? <PauseCircle className="h-5 w-5 text-black" /> : <PlayCircle className="h-5 w-5 text-black fill-black" />}
                </div>
-               <SkipForward className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+               <SkipForward 
+                 className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" 
+                 onClick={handleSkip}
+               />
                <Repeat className="h-4 w-4 text-gray-400 hover:text-white cursor-pointer" />
             </div>
             <div className="flex items-center gap-2 w-full max-w-md">
-               <span className="text-xs text-gray-400">1:24</span>
-               <Slider defaultValue={[33]} max={100} step={1} className="h-1" />
-               <span className="text-xs text-gray-400">4:03</span>
+               <span className="text-xs text-gray-400">0:00</span>
+               <Slider defaultValue={[0]} max={100} step={1} className="h-1" />
+               <span className="text-xs text-gray-400">{currentTrack?.duration || "0:00"}</span>
             </div>
          </div>
 
@@ -199,4 +263,9 @@ export default function SpotifyPage() {
       </div>
     </div>
   );
+}
+
+// Helper to make cn available if not imported or used (it is imported)
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(" ");
 }

@@ -8,22 +8,23 @@ import { useVoiceRecording } from "@/hooks/use-voice-recording";
 import { cn } from "@/lib/utils";
 import { ChatMessage, useChatStore } from "@/store/chat";
 import {
-  FileText,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Mic,
-  MoreVertical,
-  Paperclip,
-  Play,
-  Plus,
-  Send,
-  TableProperties,
-  Volume2,
-  X
+    FileText,
+    Image as ImageIcon,
+    Link as LinkIcon,
+    Loader2,
+    Mail,
+    MessageSquare,
+    Mic,
+    MoreVertical,
+    Paperclip,
+    Play,
+    Plus,
+    Send,
+    TableProperties,
+    Volume2,
+    X
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -347,8 +348,11 @@ function MessageContent({ message }: { message: ChatMessage }) {
 
 // === MAIN CHAT SIDEBAR COMPONENT ===
 export function ChatSidebar() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
   const [inputValue, setInputValue] = useState("");
+  
+  if (pathname?.startsWith('/auth/')) return null;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
