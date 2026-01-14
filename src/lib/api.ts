@@ -37,3 +37,35 @@ export interface ApiResponse<T = any> {
   error?: string;
   reason?: string;
 }
+
+// Flow API Types
+export interface FlowMetadata {
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    tags: string[];
+    estimatedTime: string;
+}
+
+export interface SavedFlow {
+    id: string;
+    metadata: FlowMetadata;
+    plan: any[];
+    goalSummary: string;
+    createdAt: string;
+}
+
+export const flowApi = {
+    getAll: async () => {
+        const res = await api.get<{success: boolean, flows: SavedFlow[]}>('/api/flows');
+        return res.data.flows;
+    },
+    save: async (flow: Omit<SavedFlow, "id" | "createdAt">) => {
+        const res = await api.post<{success: boolean, flow: SavedFlow}>('/api/flows', flow);
+        return res.data.flow;
+    },
+    delete: async (id: string) => {
+        await api.delete(`/api/flows/${id}`);
+    }
+};

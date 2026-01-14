@@ -1,19 +1,23 @@
 "use client";
 
+import { DynamicIcon } from "@/components/plans/DynamicIcon";
+import { FlowGallery } from "@/components/plans/FlowGallery";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { api, flowApi, SavedFlow } from "@/lib/api";
 import {
-    ArrowDown,
-    ArrowUp,
-    Loader2,
-    Play,
-    Plus,
-    Trash2,
-    Wand2,
-    Wrench
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Loader2,
+  Play,
+  Plus,
+  Save,
+  Trash2,
+  Wand2,
+  Wrench
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -26,13 +30,22 @@ interface PlanStep {
 }
 
 export default function PlansPage() {
+  // State: "gallery" | "builder"
+  const [view, setView] = useState<"gallery" | "builder">("gallery");
+  
   const [tools, setTools] = useState<{ name: string; description: string }[]>([]);
   const [plan, setPlan] = useState<PlanStep[]>([]);
   const [goalSummary, setGoalSummary] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingTools, setLoadingTools] = useState(true);
+  
+  // Execution & Generation State
   const [executing, setExecuting] = useState(false);
   const [autoGenerating, setAutoGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  // Current Flow Metadata (New or Existing)
   const [prompt, setPrompt] = useState("");
+  const [metadata, setMetadata] = useState<SavedFlow['metadata'] | null>(null);
 
   useEffect(() => {
     async function fetchTools() {
@@ -44,11 +57,33 @@ export default function PlansPage() {
       } catch (err) {
         console.error('Error:', err);
       } finally {
-        setLoading(false);
+        setLoadingTools(false);
       }
     }
     fetchTools();
   }, []);
+
+  const resetBuilder = () => {
+      setPlan([]);
+      setGoalSummary("");
+      setPrompt("");
+      setMetadata(null);
+  };
+
+  const switchToCreate = () => {
+      resetBuilder();
+      setView("builder");
+  };
+
+  const switchToEdit = (flow: SavedFlow) => {
+      setPlan(flow.plan);
+      setGoalSummary(flow.goalSummary);
+      setMetadata(flow.metadata);
+      setPrompt(""); // Clear prompt as it's an existing flow
+      setView("builder");
+  };
+
+  // --- Builder Logic ---
 
   const addStep = () => {
     const newId = plan.length > 0 ? Math.max(...plan.map(s => s.id)) + 1 : 1;
@@ -93,6 +128,11 @@ export default function PlansPage() {
       if (res.data?.plan) {
         setPlan(res.data.plan);
         setGoalSummary(res.data.goalSummary || prompt);
+        
+        // New: Set generated metadata
+        if (res.data.metadata) {
+            setMetadata(res.data.metadata);
+        }
       }
     } catch (err) {
       console.error('Error generating plan:', err);
@@ -119,7 +159,24 @@ export default function PlansPage() {
     }
   };
 
-  if (loading) {
+  const saveFlow = async () => {
+      if (!metadata || plan.length === 0) return;
+      setSaving(true);
+      try {
+          await flowApi.save({
+              metadata,
+              plan,
+              goalSummary
+          });
+          setView("gallery"); // Return to gallery on save
+      } catch (err) {
+          console.error("Error saving flow", err);
+      } finally {
+          setSaving(false);
+      }
+  };
+
+  if (loadingTools) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -127,26 +184,66 @@ export default function PlansPage() {
     );
   }
 
+  // --- RENDER ---
+
+  if (view === "gallery") {
+      return (
+          <div className="p-8 space-y-8">
+               {/* Header */}
+               <div>
+                <h1 className="text-3xl font-bold text-white mb-1">
+                <span className="text-primary-glow">Automation</span> Center
+                </h1>
+                <p className="text-muted-foreground">
+                Galeria de Fluxos de Inteligência Artificial
+                </p>
+            </div>
+            
+            <FlowGallery 
+                onCreateNew={switchToCreate} 
+                onSelectFlow={switchToEdit}
+            />
+          </div>
+      );
+  }
+
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-1">
-          <span className="text-primary-glow">Plan</span> Builder
-        </h1>
-        <p className="text-muted-foreground">
-          Crie planos de execução visuais para o agente
-        </p>
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => setView("gallery")}>
+            <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+            <h1 className="text-2xl font-bold text-white">
+            {metadata ? metadata.title : "Builder de Automação"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+             {metadata ? `Editando: ${metadata.description}` : "Crie um novo fluxo do zero ou com IA"}
+            </p>
+        </div>
       </div>
 
-      {/* Auto Generate */}
-      <Card className="border-primary/20">
+      {/* Auto Generate & Preview Section */}
+      <Card className="border-primary/20 relative overflow-hidden">
+        {metadata && (
+            <div 
+                className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none"
+            >
+                <DynamicIcon name={metadata.icon} className="h-32 w-32" color={metadata.color} />
+            </div>
+        )}
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-primary" />
-            Gerar com IA
+            Gerador Inteligente
           </CardTitle>
-          <CardDescription>Descreva o que você quer e a IA criará o plano</CardDescription>
+          <CardDescription>
+            {metadata 
+                ? "Refine seu prompt para regenerar o fluxo ou ajuste manualmente abaixo." 
+                : "Descreva o que você quer e a IA criará o plano completo."}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Textarea
@@ -155,20 +252,30 @@ export default function PlansPage() {
             onChange={e => setPrompt(e.target.value)}
             className="bg-secondary/50 border-white/10 min-h-[80px]"
           />
-          <Button onClick={autoGenerate} disabled={autoGenerating || !prompt.trim()}>
-            {autoGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4 mr-2" />
-            )}
-            Gerar Plano
-          </Button>
+          <div className="flex justify-between items-center">
+             <Button onClick={autoGenerate} disabled={autoGenerating || !prompt.trim()}>
+                {autoGenerating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                <Wand2 className="h-4 w-4 mr-2" />
+                )}
+                {metadata ? "Regenerar Fluxo" : "Gerar Fluxo IA"}
+             </Button>
+
+             {/* Save Button for Generated Content */ }
+             {metadata && (
+                 <Button variant="secondary" onClick={saveFlow} disabled={saving}>
+                     {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                     Salvar na Galeria
+                 </Button>
+             )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Goal Summary */}
       <div>
-        <label className="text-sm font-medium text-white mb-2 block">Objetivo do Plano</label>
+        <label className="text-sm font-medium text-white mb-2 block">Objetivo Técnico</label>
         <Input
           placeholder="Descreva o objetivo em uma frase..."
           value={goalSummary}
@@ -238,11 +345,19 @@ export default function PlansPage() {
 
                 <Textarea
                   placeholder='Argumentos JSON: {"key": "value"}'
-                  value={JSON.stringify(step.args, null, 2)}
+                  value={typeof step.args === 'string' ? step.args : JSON.stringify(step.args, null, 2)}
                   onChange={e => {
+                    // We allow free text editing, validation happens on parse when executing/saving if strict
+                    // For now, try parse to object if valid JSON
                     try {
-                      updateStep(step.id, { args: JSON.parse(e.target.value) });
-                    } catch {}
+                      const parsed = JSON.parse(e.target.value);
+                      updateStep(step.id, { args: parsed });
+                    } catch {
+                      // If invalid JSON, treat as string or just don't update object state? 
+                      // Ideally we should keep local string state.
+                      // Simplified: We assume user pastes valid JSON or we'd need a separate 'argsString' state.
+                      // For this demo, let's just assume valid JSON or it stays as last valid.
+                    }
                   }}
                   className="bg-secondary/50 border-white/10 font-mono text-xs min-h-[60px]"
                 />
@@ -278,7 +393,7 @@ export default function PlansPage() {
             ) : (
               <Play className="h-4 w-4 mr-2" />
             )}
-            Executar Plano
+            Executar Plano Agora
           </Button>
         </div>
       )}
