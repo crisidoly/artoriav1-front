@@ -194,6 +194,7 @@ const DESIGN_SUITE_ITEMS = [
 
 const DEV_GIT_ITEMS = [
   { label: "Code Playground", href: "/code", icon: Terminal },
+  { label: "Remote Sandbox", href: "/sandbox", icon: Terminal },
   { label: "GitHub", href: "/github", icon: Github },
 ];
 
