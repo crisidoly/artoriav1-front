@@ -59,6 +59,7 @@ import {
     Send,
     Settings,
     Shield,
+    ShoppingBag,
     TableProperties,
     Target,
     Terminal,
@@ -226,6 +227,7 @@ const MICROSOFT_ITEMS = [
 const BUSINESS_ITEMS = [
   { label: "Finance HQ", href: "/finance", icon: DollarSign },
   { label: "Controle Gastos", href: "/finance/expenses", icon: Calculator },
+  { label: "Mercado Livre", href: "/meli", icon: ShoppingBag },
   { label: "Marketing", href: "/marketing", icon: Megaphone },
   { label: "CRM Sales", href: "/crm", icon: Target },
 ];

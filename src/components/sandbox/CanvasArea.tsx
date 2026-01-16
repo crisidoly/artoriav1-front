@@ -94,6 +94,14 @@ export function CanvasArea() {
                 "sp-stack": "h-full",
               }
             }}
+            customSetup={{
+              dependencies: {
+                "lucide-react": "latest",
+                "recharts": "latest",
+                "clsx": "latest",
+                "tailwind-merge": "latest"
+              }
+            }}
           >
             <SandpackLayout className="h-full border-0 rounded-none bg-transparent">
               {view === 'preview' ? (

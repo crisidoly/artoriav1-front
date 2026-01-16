@@ -98,9 +98,55 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
     });
   }
 
+
   // 3. Check for ARTIFACTS (Canvas Mode)
   const artifact = extractArtifact(reply || "");
   let cleanReply = reply || "";
+
+  // 3.1 Check for MeLi Auth
+  if (metadata?.action === 'reconnect_meli') {
+    messages.push({
+      id: uuidv4(),
+      role: 'assistant',
+      content: '', // No text content needed
+      type: 'artifact', // Reusing artifact type for custom rendering, or we could add specific type if sidebar supports it
+      timestamp: new Date(),
+      metadata: {
+        artifactData: {
+            type: 'meli-auth',
+            title: 'Mercado Livre Auth',
+            file: 'auth',
+            code: ''
+        }
+      }
+    });
+  }
+
+  // 3.2 Check for MeLi Data (Inventory/Questions/Sales)
+  if (metadata?.toolName && ['get_meli_inventory', 'manage_meli_questions', 'monitor_meli_sales'].includes(metadata.toolName) && metadata.toolResult?.data) {
+     let meliType = '';
+     if (metadata.toolName === 'get_meli_inventory') meliType = 'inventory';
+     if (metadata.toolName === 'manage_meli_questions') meliType = 'questions';
+     if (metadata.toolName === 'monitor_meli_sales') meliType = 'sales';
+
+     if (meliType) {
+        messages.push({
+            id: uuidv4(),
+            role: 'assistant',
+            content: '',
+            type: 'artifact',
+            timestamp: new Date(),
+            metadata: {
+                artifactData: {
+                    type: `meli-${meliType}`,
+                    title: `Dados Mercado Livre`,
+                    file: meliType,
+                    code: JSON.stringify(metadata.toolResult.data) // Passing data via code field for now
+                }
+            }
+        });
+     }
+  }
 
   if (artifact) {
     // Split text around artifact

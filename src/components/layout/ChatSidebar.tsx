@@ -31,6 +31,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 
+import { MeliAuthCard } from "../meli/MeliAuthCard";
+import { MeliDataCard } from "../meli/MeliDataCard";
+
 
 
 // === LINK STYLING HELPER ===
@@ -300,10 +303,34 @@ function MessageContent({ message }: { message: ChatMessage }) {
     );
   }
   
+
   // Render artifact type
   if (message.type === 'artifact' && message.metadata?.artifactData) {
     const { setActiveArtifact, activeArtifact } = useChatStore();
     const isActive = activeArtifact?.id === message.id;
+    const { type, code } = message.metadata.artifactData;
+
+    // === MELI CARDS ===
+    if (type === 'meli-auth') {
+        return <MeliAuthCard />;
+    }
+
+    if (type.startsWith('meli-')) {
+        let meliType: 'inventory' | 'questions' | 'sales' | null = null;
+        if (type === 'meli-inventory') meliType = 'inventory';
+        if (type === 'meli-questions') meliType = 'questions';
+        if (type === 'meli-sales') meliType = 'sales';
+
+        if (meliType) {
+            try {
+                const data = JSON.parse(code);
+                return <MeliDataCard type={meliType} data={data} />;
+            } catch (e) {
+                console.error('Failed to parse MeLi data', e);
+            }
+        }
+    }
+    // ==================
 
     return (
       <div 
@@ -332,7 +359,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
           </Button>
         </div>
         <div className="text-[10px] text-muted-foreground line-clamp-2 bg-black/40 p-2 rounded border border-white/5 font-mono">
-          {message.metadata.artifactData.code.substring(0, 100)}...
+          {code.substring(0, 100)}...
         </div>
       </div>
     );

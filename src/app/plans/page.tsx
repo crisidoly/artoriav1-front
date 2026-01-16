@@ -11,17 +11,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, flowApi, SavedFlow } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
-    ArrowDown,
-    ArrowLeft,
-    ArrowUp,
-    Loader2,
-    Play,
-    Plus,
-    Save,
-    Terminal,
-    Trash2,
-    Wand2,
-    Wrench
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Loader2,
+  Play,
+  Plus,
+  Save,
+  Terminal,
+  Trash2,
+  Wand2,
+  Wrench
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
@@ -276,7 +276,7 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="p-8 space-y-6 min-h-full flex flex-col overflow-auto">
+    <div className="p-8 space-y-6 h-full flex flex-col overflow-y-auto">
       {/* Header with Back Button */}
       <div className="flex items-center gap-4 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => setView("gallery")}>
