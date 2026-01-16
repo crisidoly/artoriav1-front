@@ -13,6 +13,7 @@ interface FlowGalleryProps {
 export function FlowGallery({ onCreateNew, onSelectFlow }: FlowGalleryProps) {
   const [flows, setFlows] = useState<SavedFlow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [runningFlowId, setRunningFlowId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFlows();
@@ -31,16 +32,21 @@ export function FlowGallery({ onCreateNew, onSelectFlow }: FlowGalleryProps) {
 
   async function handleExecute(flow: SavedFlow) {
       try {
+          // Set active state to show terminal immediately
+          setRunningFlowId(flow.id);
+          
           // Trigger execution via API
           await api.post('/api/workflows/execute', {
               plan: flow.plan,
-              goalSummary: flow.goalSummary
+              goalSummary: flow.goalSummary,
+              flowId: flow.id // Needed for websocket routing
           });
-          // Redirect to workflows page to view progress
-          window.location.href = '/workflows';
+          
+          // Removed redirect to allow user to see logs in the card
       } catch (err) {
           console.error("Execução falhou", err);
           alert("Falha ao iniciar execução");
+          setRunningFlowId(null);
       }
   }
 
@@ -91,6 +97,7 @@ export function FlowGallery({ onCreateNew, onSelectFlow }: FlowGalleryProps) {
             onPlay={() => handleExecute(flow)}
             onClick={() => onSelectFlow(flow)}
             onDelete={() => handleDelete(flow.id)}
+            isExecuting={runningFlowId === flow.id}
           />
         ))}
       </div>

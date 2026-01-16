@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import * as sandbox from "@/lib/sandbox";
 import { cn } from "@/lib/utils";
 import {
+    Code2,
     ExternalLink,
     File,
     FileCode,
@@ -442,11 +443,12 @@ export default function CodePage() {
               spellCheck={false}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <FileCode className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p>Selecione um arquivo para editar</p>
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-950/50">
+              <div className="p-8 rounded-full bg-secondary/20 mb-4 animate-pulse">
+                <Code2 className="h-12 w-12 opacity-20" />
               </div>
+              <p className="text-sm font-medium">Nenhum artefato ativo</p>
+              <p className="text-xs opacity-50">Gere um componente ou código para visualizar aqui</p>
             </div>
           )}
         </div>

@@ -110,7 +110,7 @@ export default function VoiceSettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8">
+    <div className="p-8 max-w-4xl mx-auto space-y-8 min-h-full">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white mb-1">

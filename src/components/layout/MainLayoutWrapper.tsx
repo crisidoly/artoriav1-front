@@ -2,20 +2,16 @@
 
 import { ReactNode } from "react";
 // import { usePathname } from "next/navigation";  <-- Not needed anymore for global change
-import { cn } from "@/lib/utils";
 
 export function MainLayoutWrapper({ children }: { children: ReactNode }) {
-  // const pathname = usePathname();
-  // const isFullWidthPage = pathname?.startsWith("/slack");
-
   return (
-    <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background relative scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
+    <main className="h-full flex flex-col bg-background relative overflow-hidden">
       {/* 
-         GLOBAL CHANGE: Removed padding wrapper logic.
-         All pages now have full width/height (edge-to-edge).
-         Individual pages should manage their own padding if needed.
+         GLOBAL CHANGE: All pages now occupy full workspace height.
+         Scroll management is delegated to individual page components
+         to support complex layouts (Gmail, Slack, etc.) properly.
       */}
-      <div className={cn("h-full")}>
+      <div className="flex-1 min-h-0 h-full">
          {children}
       </div>
     </main>

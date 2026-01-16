@@ -94,7 +94,7 @@ export default function CircuitsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 min-h-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

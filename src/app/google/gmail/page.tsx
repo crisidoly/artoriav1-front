@@ -10,18 +10,52 @@ import { cn } from "@/lib/utils";
 import { Archive, ChevronLeft, ChevronRight, MoreVertical, Reply, Search, Star, Trash } from "lucide-react";
 import { useState } from "react";
 
+// Define a type for the email object that matches the UI model
+interface Email {
+  id: string;
+  subject: string;
+  body: string;
+  snippet: string; // Added missing property
+  from: string;
+  sender: string; // Mapped from 'from'
+  date: string;
+  isRead: boolean;
+  read: boolean; // Mapped from 'isRead'
+  isStarred: boolean;
+  starred: boolean; // Mapped from 'isStarred'
+  folder: string;
+}
+
 export default function GmailPage() {
-  const [activeFolder, setActiveFolder] = useState("inbox");
+  const [activeFolder, setActiveFolderState] = useState<string>("inbox");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   const { data: apiEmails, isLoading, error } = useEmails(activeFolder);
   
+  const setActiveFolder = (id: string | null) => {
+    setActiveFolderState(id || "inbox");
+  };
+
+  const handleSelectEmail = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedEmailId(id);
+  };
+
+  const handleToggleStar = (e: React.MouseEvent, email: Email) => {
+    e.stopPropagation();
+    // Logic for starring
+    console.log(`Toggling star for email ID: ${email.id}`);
+    // In a real app, you'd call an API here to update the star status
+    // and then re-fetch or update the local state.
+  };
+
   // Map API data to UI model
-  const filteredEmails = apiEmails?.map(e => ({
+  const filteredEmails: Email[] = apiEmails?.map((e: any) => ({
       ...e,
       sender: e.from,
       read: e.isRead,
-      starred: e.isStarred || false,
+      starred: e.isStarred,
+      snippet: e.body?.substring(0, 100) || "", // Map body to snippet
       folder: e.folder // Ensure folder matches
   })) || [];
 
@@ -32,7 +66,7 @@ export default function GmailPage() {
 
 
   return (
-    <div className="flex h-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
+    <div className="flex h-full w-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
       {/* Sidebar */}
       <MailboxSidebar activeFolderId={activeFolder} onSelect={(id) => { setActiveFolder(id); setSelectedEmailId(null); }} />
 
@@ -58,7 +92,7 @@ export default function GmailPage() {
         </div>
 
         {/* content split */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 h-full overflow-hidden">
             {/* Email List */}
             <div className={cn(
                 "flex-1 border-r border-white/5 flex flex-col min-w-[350px]",
@@ -73,7 +107,7 @@ export default function GmailPage() {
                         <div className="p-8 text-center text-muted-foreground opacity-50">Pasta vazia</div>
                     ) : (
                         <div className="flex flex-col">
-                            {filteredEmails.map(email => (
+                            {filteredEmails.map((email: any) => (
                                 <div key={email.id} className={cn(selectedEmailId === email.id && "bg-primary/10")}>
                                     <GmailItem email={email} onClick={() => setSelectedEmailId(email.id)} />
                                 </div>

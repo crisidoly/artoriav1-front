@@ -9,7 +9,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  type: 'message' | 'thought' | 'tool_call' | 'image' | 'chart';
+  type: 'message' | 'thought' | 'tool_call' | 'image' | 'chart' | 'artifact';
   timestamp: Date;
   metadata?: {
     imageUrl?: string;
@@ -18,6 +18,12 @@ export interface ChatMessage {
     toolName?: string;
     toolArgs?: any;
     provider?: string;
+    artifactData?: {
+      type: string;
+      title: string;
+      file: string;
+      code: string;
+    };
   };
 }
 
@@ -32,6 +38,7 @@ interface ChatState {
   isConnected: boolean;
   isTyping: boolean;
   conversationId: string | null;
+  activeArtifact: ChatMessage | null;
   
   // Actions
   sendMessage: (content: string) => Promise<void>;
@@ -39,13 +46,31 @@ interface ChatState {
   addMessage: (message: ChatMessage) => void;
   clearMessages: () => void;
   setConnected: (connected: boolean) => void;
+  setActiveArtifact: (artifact: ChatMessage | null) => void;
+}
+
+// Helper to extract artifact from content
+function extractArtifact(content: string) {
+  const artifactRegex = /<artifact\s+type="([^"]+)"\s+title="([^"]+)"\s+file="([^"]+)"\s*>([\s\S]*?)<\/artifact>/g;
+  const match = artifactRegex.exec(content);
+  
+  if (match) {
+    return {
+      type: match[1],
+      title: match[2],
+      file: match[3],
+      code: match[4].trim(),
+      fullMatch: match[0]
+    };
+  }
+  return null;
 }
 
 // Helper to parse AI response and detect special content
 function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
   const messages: ChatMessage[] = [];
   
-  // Check for image URLs in metadata or response
+  // 1. Check for image URLs in metadata or response
   if (metadata?.imageUrl || metadata?.generatedImage) {
     messages.push({
       id: uuidv4(),
@@ -59,7 +84,7 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
     });
   }
   
-  // Check for chart data
+  // 2. Check for chart data
   if (metadata?.chartData) {
     messages.push({
       id: uuidv4(),
@@ -72,11 +97,63 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
       }
     });
   }
+
+  // 3. Check for ARTIFACTS (Canvas Mode)
+  const artifact = extractArtifact(reply || "");
+  let cleanReply = reply || "";
+
+  if (artifact) {
+    // Split text around artifact
+    const parts = reply.split(artifact.fullMatch);
+    const textBefore = parts[0]?.trim();
+    const textAfter = parts[1]?.trim();
+
+    if (textBefore) {
+      messages.push({
+        id: uuidv4(),
+        role: 'assistant',
+        content: textBefore,
+        type: 'message',
+        timestamp: new Date(),
+        metadata: { provider: metadata?.provider }
+      });
+    }
+
+    messages.push({
+      id: uuidv4(),
+      role: 'assistant',
+      content: `[Artefato: ${artifact.title}]`,
+      type: 'artifact',
+      timestamp: new Date(),
+      metadata: {
+        artifactData: {
+          type: artifact.type,
+          title: artifact.title,
+          file: artifact.file,
+          code: artifact.code
+        },
+        provider: metadata?.provider
+      }
+    });
+
+    if (textAfter) {
+      messages.push({
+        id: uuidv4(),
+        role: 'assistant',
+        content: textAfter,
+        type: 'message',
+        timestamp: new Date(),
+        metadata: { provider: metadata?.provider }
+      });
+    }
+
+    return messages;
+  }
   
-  // Main text response
+  // 4. Main text response (Regular)
   if (reply) {
     // Extract links from response
-    const links: ChatMessage['metadata'] extends { links: infer L } ? L : any = [];
+    const links: any[] = [];
     const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
     let match;
     while ((match = linkRegex.exec(reply)) !== null) {
@@ -115,14 +192,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   ],
   history: [],
-  isConnected: true, // We're using REST, always "connected"
+  isConnected: true,
   isTyping: false,
   conversationId: null,
+  activeArtifact: null,
 
   sendMessage: async (content: string) => {
     const state = get();
     
-    // Add user message optimistically
     const userMsg: ChatMessage = {
       id: uuidv4(),
       role: 'user',
@@ -131,7 +208,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       timestamp: new Date(),
     };
     
-    // Update history for context
     const newHistory: ConversationHistory[] = [
       ...state.history,
       { role: 'user', parts: [{ text: content }] }
@@ -144,7 +220,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
 
     try {
-      // Call backend API
       const response = await api.post('/api/chat', {
         content,
         history: newHistory,
@@ -156,7 +231,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       const data = response.data;
       
-      // Parse and add AI response(s)
       const aiMessages = parseAIResponse(data.reply, {
         provider: data.provider,
         imageUrl: data.toolResult?.imageUrl,
@@ -164,23 +238,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ...data.metadata
       });
       
-      // Update history with AI response
       const updatedHistory: ConversationHistory[] = [
         ...newHistory,
         { role: 'model', parts: [{ text: data.reply || '' }] }
       ];
       
-      set(s => ({ 
-        messages: [...s.messages, ...aiMessages],
-        history: updatedHistory,
-        isTyping: false,
-        conversationId: data.conversationId || s.conversationId
-      }));
+      set(s => {
+        const newState: Partial<ChatState> = {
+          messages: [...s.messages, ...aiMessages],
+          history: updatedHistory,
+          isTyping: false,
+          conversationId: data.conversationId || s.conversationId
+        };
+
+        // If an artifact message was just added, auto-activate it
+        const lastMsg = aiMessages.find(m => m.type === 'artifact');
+        if (lastMsg) {
+          newState.activeArtifact = lastMsg;
+        }
+
+        return newState;
+      });
       
     } catch (error: any) {
       console.error('[CHAT] Error sending message:', error);
       
-      // Add error message
       set(s => ({ 
         messages: [...s.messages, {
           id: uuidv4(),
@@ -196,11 +278,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   sendAudioMessage: async (audioBlob: Blob) => {
     const state = get();
-    
     set({ isTyping: true });
     
     try {
-      // Create FormData for multipart upload
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('history', JSON.stringify(state.history));
@@ -208,42 +288,47 @@ export const useChatStore = create<ChatState>((set, get) => ({
         formData.append('conversationId', state.conversationId);
       }
       
-      // Call audio endpoint
       const response = await api.post('/api/audio/chat', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
       const data = response.data;
       
-      // Add user message (transcription)
       if (data.transcript) {
-        const userMsg: ChatMessage = {
-          id: uuidv4(),
-          role: 'user',
-          content: `🎤 ${data.transcript}`,
-          type: 'message',
-          timestamp: new Date(),
-        };
-        
-        set(s => ({ messages: [...s.messages, userMsg] }));
+        set(s => ({ 
+          messages: [...s.messages, {
+            id: uuidv4(),
+            role: 'user',
+            content: `🎤 ${data.transcript}`,
+            type: 'message',
+            timestamp: new Date(),
+          }] 
+        }));
       }
       
-      // Add AI response
       if (data.chatResponse?.reply) {
         const aiMessages = parseAIResponse(data.chatResponse.reply, {
           provider: data.chatResponse.provider,
           ...data.chatResponse.metadata
         });
         
-        set(s => ({ 
-          messages: [...s.messages, ...aiMessages],
-          isTyping: false 
-        }));
+        set(s => {
+          const newState: Partial<ChatState> = {
+            messages: [...s.messages, ...aiMessages],
+            isTyping: false 
+          };
+          
+          const lastMsg = aiMessages.find(m => m.type === 'artifact');
+          if (lastMsg) {
+            newState.activeArtifact = lastMsg;
+          }
+          
+          return newState;
+        });
       }
       
     } catch (error: any) {
       console.error('[CHAT] Error sending audio:', error);
-      
       set(s => ({ 
         messages: [...s.messages, {
           id: uuidv4(),
@@ -258,6 +343,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   addMessage: (message) => set(state => ({ messages: [...state.messages, message] })),
-  clearMessages: () => set({ messages: [], history: [], conversationId: null }),
+  clearMessages: () => set({ messages: [], history: [], conversationId: null, activeArtifact: null }),
   setConnected: (connected) => set({ isConnected: connected }),
+  setActiveArtifact: (artifact) => set({ activeArtifact: artifact }),
 }));

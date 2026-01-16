@@ -2,74 +2,76 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
-  Bell,
-  Bot,
-  Brain,
-  Briefcase,
-  Calculator,
-  Calendar,
-  CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Clapperboard,
-  Code2,
-  DollarSign,
-  Figma as FigmaIcon,
-  FileSearch,
-  FileText,
-  Github,
-  Globe,
-  GraduationCap,
-  HardDrive,
-  Hash,
-  Headset,
-  HeartPulse,
-  Image as ImageIcon,
-  Layout,
-  LayoutDashboard,
-  Link2,
-  Mail,
-  Megaphone,
-  Menu,
-  MessageCircle,
-  MessageSquare,
-  Music,
-  Network,
-  Palette,
-  Scale,
-  Send,
-  Settings,
-  Shield,
-  TableProperties,
-  Target,
-  Terminal,
-  Truck,
-  Users,
-  Wifi,
-  Wrench,
-  X
+    Activity,
+    BarChart3,
+    Bell,
+    Bot,
+    Brain,
+    Briefcase,
+    Calculator,
+    Calendar,
+    CheckSquare,
+    ChevronDown,
+    ChevronRight,
+    Clapperboard,
+    Code2,
+    DollarSign,
+    Figma as FigmaIcon,
+    FileSearch,
+    FileText,
+    Github,
+    Globe,
+    GraduationCap,
+    HardDrive,
+    Hash,
+    Headset,
+    HeartPulse,
+    Image as ImageIcon,
+    Layout,
+    LayoutDashboard,
+    Link2,
+    Mail,
+    Megaphone,
+    Menu,
+    MessageCircle,
+    MessageSquare,
+    Music,
+    Network,
+    Palette,
+    Scale,
+    Send,
+    Settings,
+    Shield,
+    TableProperties,
+    Target,
+    Terminal,
+    Truck,
+    Users,
+    Wifi,
+    Wrench,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { SidebarActivity } from "./SidebarActivity";
 
 // === NAV GROUP WITH DROPDOWN ===
 function NavGroup({ 
@@ -254,10 +256,10 @@ const KNOWLEDGE_ITEMS = [
 ];
 
 const ADMIN_ITEMS = [
+  { label: "Sentinel Eye", href: "/admin/control", icon: Activity },
   { label: "System Health", href: "/admin", icon: Shield },
   { label: "Integrações", href: "/integrations", icon: Link2 },
   { label: "Custos & Uso", href: "/admin/costs", icon: Globe },
-  { label: "Circuit Breakers", href: "/admin/circuits", icon: Shield },
 ];
 
 const MOCK_NOTIFICATIONS = [
@@ -522,6 +524,9 @@ export function AppSidebar() {
               </div>
             )}
           </div>
+          
+          {/* AI Activity Status */}
+          {!isCollapsed && <SidebarActivity />}
 
           {/* Footer with Notifications */}
           <div className="p-4 border-t border-white/5">

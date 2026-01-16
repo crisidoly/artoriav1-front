@@ -42,7 +42,7 @@ export default function DrivePage() {
 
 
   return (
-    <div className="flex h-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
+    <div className="flex h-full w-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
       {/* Sidebar */}
       <DriveSidebar activeSection={activeSection} onSelect={setActiveSection} />
 

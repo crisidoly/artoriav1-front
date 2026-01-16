@@ -65,7 +65,7 @@ export default function CostsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 min-h-full">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white mb-1">

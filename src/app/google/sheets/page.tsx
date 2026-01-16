@@ -45,7 +45,7 @@ export default function SheetsPage() {
   );
 
   return (
-    <div className="flex h-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
+    <div className="flex h-full w-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
       {/* Sidebar - Reusing DriveSidebar for consistency */}
       <DriveSidebar activeSection="sheets" onSelect={(id) => setActiveSection(id)} />
 

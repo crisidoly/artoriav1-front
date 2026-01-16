@@ -2,7 +2,7 @@ import RemoteTerminal from '@/components/sandbox/RemoteTerminal';
 
 export default function SandboxPage() {
   return (
-    <div className="p-8 space-y-6 bg-zinc-950 min-h-screen text-white">
+    <div className="p-8 space-y-6 bg-zinc-950 min-h-full text-white">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
           Remote Sandbox Controller

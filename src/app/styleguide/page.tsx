@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export default function StyleGuidePage() {
   return (
-    <div className="container mx-auto py-10 space-y-12">
+    <div className="container mx-auto py-10 space-y-12 min-h-full">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight text-primary-glow">ArtorIA Design System</h1>
         <p className="text-xl text-muted-foreground">Cyberpunk Aesthetic & Component Playground</p>

@@ -14,7 +14,11 @@ export interface GitHubRepo {
   updated_at: string;
   language: string;
   stargazers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  watchers_count: number;
 }
+
 
 export interface GitHubIssue {
   id: number;
@@ -114,12 +118,28 @@ export function useGitHub() {
     }
   }, []);
 
+  const getPullRequests = useCallback(async (owner: string, repo: string): Promise<any[]> => {
+    try {
+      const response = await api.get(`/api/github/repositories/${owner}/${repo}/pulls`);
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch pulls:', error);
+      return [];
+    }
+  }, []);
+
+
+
   return {
     loading,
     getUser,
     getRepositories,
     getEvents,
     getIssues,
+    getPullRequests,
     createIssue
   };
 }

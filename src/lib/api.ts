@@ -46,6 +46,7 @@ export interface FlowMetadata {
     color: string;
     tags: string[];
     estimatedTime: string;
+    trigger?: string;
 }
 
 export interface SavedFlow {

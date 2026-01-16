@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { ChatSidebar } from "@/components/layout/ChatSidebar"; // New import
+import { InteractionArea } from "@/components/layout/InteractionArea";
 import { MainLayoutWrapper } from "@/components/layout/MainLayoutWrapper";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -24,22 +25,30 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased overflow-hidden", // Prevent body scroll
+          "min-h-screen bg-background font-sans antialiased overflow-hidden",
           inter.variable
         )}
       >
         <Providers>
           <div className="flex h-screen w-full">
-            {/* Left Sidebar */}
+            {/* Left Sidebar (Fixed) */}
             <AppSidebar />
 
-            {/* Main Content Area */}
-            <MainLayoutWrapper>
-              {children}
-            </MainLayoutWrapper>
+            <ResizablePanelGroup orientation="horizontal" className="flex-1">
+              {/* Main Workspace (Dashboard/Pages) */}
+              <ResizablePanel defaultSize={60} minSize={30}>
+                <MainLayoutWrapper>
+                  {children}
+                </MainLayoutWrapper>
+              </ResizablePanel>
 
-            {/* Right Chat Sidebar - Hidden on mobile by default in CSS, managed by component */}
-            <ChatSidebar /> 
+              <ResizableHandle withHandle className="bg-primary/10 hover:bg-primary/30 transition-colors" />
+
+              {/* Interaction Area (Chat + Canvas) */}
+              <ResizablePanel defaultSize={40} minSize={25}>
+                <InteractionArea />
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </div>
         </Providers>
       </body>

@@ -8,6 +8,8 @@ import { useVoiceRecording } from "@/hooks/use-voice-recording";
 import { cn } from "@/lib/utils";
 import { ChatMessage, useChatStore } from "@/store/chat";
 import {
+    Code2,
+    Eye,
     FileText,
     Image as ImageIcon,
     Link as LinkIcon,
@@ -298,6 +300,44 @@ function MessageContent({ message }: { message: ChatMessage }) {
     );
   }
   
+  // Render artifact type
+  if (message.type === 'artifact' && message.metadata?.artifactData) {
+    const { setActiveArtifact, activeArtifact } = useChatStore();
+    const isActive = activeArtifact?.id === message.id;
+
+    return (
+      <div 
+        className={cn(
+          "bg-slate-900/80 border rounded-xl p-4 my-2 cursor-pointer group transition-all hover:border-primary/50",
+          isActive ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(124,58,237,0.2)]" : "border-primary/20"
+        )}
+        onClick={() => setActiveArtifact(message)}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-primary/20">
+              <Code2 className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block truncate max-w-[150px]">
+                {message.metadata.artifactData.title}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {message.metadata.artifactData.file}
+              </span>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="text-[10px] text-muted-foreground line-clamp-2 bg-black/40 p-2 rounded border border-white/5 font-mono">
+          {message.metadata.artifactData.code.substring(0, 100)}...
+        </div>
+      </div>
+    );
+  }
+
   // Render markdown with custom link styling
   return (
     <div className="prose prose-invert prose-sm max-w-none 
@@ -454,8 +494,8 @@ export function ChatSidebar() {
 
       <aside 
         className={cn(
-          "flex flex-col h-[100dvh] bg-card/95 backdrop-blur-md border-l border-border transition-all duration-300 shadow-2xl z-50",
-          "fixed inset-y-0 right-0 w-full lg:w-[420px] lg:static lg:h-full"
+          "flex flex-col h-[100dvh] bg-card/95 backdrop-blur-md transition-all duration-300 shadow-2xl z-50",
+          "fixed inset-y-0 right-0 w-full lg:w-full lg:static lg:h-full lg:border-0 border-l border-border"
         )}
       >
         {/* Header with TTS Button */}

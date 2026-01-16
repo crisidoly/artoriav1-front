@@ -4,7 +4,7 @@ import { Activity, ArrowUpRight, Calendar, Code2, Settings } from "lucide-react"
 
 export default function DashboardPage() {
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 min-h-full">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <div>

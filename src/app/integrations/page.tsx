@@ -5,15 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import {
-  CheckCircle,
-  ChevronRight,
-  ExternalLink,
-  Github,
-  Globe,
-  HardDrive,
-  Link2,
-  Music,
-  XCircle
+    CheckCircle,
+    ChevronRight,
+    ExternalLink,
+    Github,
+    Globe,
+    HardDrive,
+    Link2,
+    Music,
+    XCircle
 } from "lucide-react";
 
 interface Integration {
@@ -80,7 +80,7 @@ export default function IntegrationsPage() {
   const connectedCount = integrations.filter(i => isConnected(i.id)).length;
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 min-h-full">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white mb-1">
