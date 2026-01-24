@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import axios from "axios";
-import { AlertCircle, ExternalLink, Github, Lock, RefreshCw, Search, ShieldCheck, Star, Unlock } from "lucide-react";
+import { AlertCircle, Code2, ExternalLink, Github, Lock, RefreshCw, Search, ShieldCheck, Star, Unlock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -38,6 +39,7 @@ interface AnalysisData {
 }
 
 export default function GithubPage() {
+    const router = useRouter();
     const [repos, setRepos] = useState<Repository[]>([]);
     const [filteredRepos, setFilteredRepos] = useState<Repository[]>([]);
     const [loading, setLoading] = useState(true);
@@ -218,6 +220,16 @@ export default function GithubPage() {
                                                     <ExternalLink className="h-3 w-3" />
                                                     View
                                                 </a>
+                                            </Button>
+
+                                            <Button 
+                                                size="sm" 
+                                                variant="secondary" 
+                                                className="h-8 gap-1 border border-border" 
+                                                onClick={() => router.push(`/code?repo=${encodeURIComponent(repo.html_url)}&name=${encodeURIComponent(repo.name)}`)}
+                                            >
+                                                <Code2 className="h-3 w-3" />
+                                                Editor
                                             </Button>
                                             
                                             <Dialog>

@@ -8,22 +8,25 @@ import { Textarea } from "@/components/ui/textarea";
 import * as sandbox from "@/lib/sandbox";
 import { cn } from "@/lib/utils";
 import {
-    Code2,
-    ExternalLink,
-    File,
-    FileCode,
-    Folder,
-    Loader2,
-    Package,
-    Play,
-    Plus,
-    Save,
-    Sparkles,
-    Terminal,
-    Trash2,
-    X
+  Code2,
+  ExternalLink,
+  File,
+  FileCode,
+  Folder,
+  GitBranch,
+  Loader2,
+  Package,
+  Play,
+  Plus,
+  Save,
+  Sparkles,
+  Terminal,
+  Trash2,
+  X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface ProjectFile {
   path: string;
@@ -48,6 +51,9 @@ interface FileTreeNode {
 }
 
 export default function CodePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   // Projects state
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -71,6 +77,11 @@ export default function CodePage() {
   // Loading states
   const [loading, setLoading] = useState(true);
   const [sandboxConnected, setSandboxConnected] = useState(false);
+  
+  // Clone state
+  const [isCloning, setIsCloning] = useState(false);
+  const [cloneStatus, setCloneStatus] = useState("");
+  const cloneAttempted = useRef(false);
 
   // Check sandbox health and load projects on mount
   useEffect(() => {
@@ -91,6 +102,79 @@ export default function CodePage() {
     }
     init();
   }, []);
+
+  // Handle Auto-Clone via URL
+  useEffect(() => {
+    const repoUrl = searchParams.get('repo');
+    const repoName = searchParams.get('name');
+
+    if (repoUrl && !cloneAttempted.current && !loading && sandboxConnected) {
+        cloneAttempted.current = true;
+        handleAutoClone(repoUrl, repoName);
+    }
+  }, [searchParams, loading, sandboxConnected]);
+
+  const handleAutoClone = async (url: string, name?: string) => {
+      setIsCloning(true);
+      setCloneStatus("Initializing sandbox environment...");
+      
+      try {
+          // 1. Clone
+          setCloneStatus(`Cloning ${name || 'repository'}...`);
+          const { projectId } = await sandbox.cloneProject(url, name);
+          
+          setOutput(prev => prev + `\n🚀 Repository cloned: ${url}`);
+
+          // 2. Refresh Projects
+          setCloneStatus("Loading project structure...");
+          const projectList = await sandbox.listProjects();
+          setProjects(projectList);
+          
+          const newProject = projectList.find(p => p.id === projectId);
+          if (newProject) {
+              await selectProject(newProject);
+              
+              // 3. Auto Check for Dependencies
+              const files = await sandbox.getProjectFiles(projectId);
+              const hasPackageJson = files.some(f => f.path === 'package.json');
+              
+              if (hasPackageJson) {
+                  setCloneStatus("Installing dependencies (npm install)...");
+                  setOutput(prev => prev + `\n📦 package.json found. Running npm install...`);
+                  
+                  // Run install in background (don't block UI entirely, but show status)
+                  // Actually, blocking is better for UX so user doesn't try to run start immediately
+                  try {
+                      const installResult = await sandbox.npmInstall(projectId);
+                      setOutput(prev => prev + `\n${installResult.stdout}\n${installResult.stderr}`);
+                      if (installResult.success) {
+                           toast.success("Dependencies installed successfully");
+                      } else {
+                           toast.error("npm install finished with errors");
+                      }
+                  } catch (npmErr) {
+                      console.error(npmErr);
+                      toast.error("Failed to run npm install");
+                  }
+              } else {
+                  toast.info("No package.json found. Skipping npm install.");
+              }
+              
+              toast.success("Project ready!");
+          }
+          
+          // Clear URL
+          router.replace('/code');
+
+      } catch (error: any) {
+          console.error(error);
+          toast.error(`Clone failed: ${error.message}`);
+          setOutput(prev => prev + `\n❌ Clone failed: ${error.message}`);
+      } finally {
+          setIsCloning(false);
+          setCloneStatus("");
+      }
+  };
 
   // Build file tree from flat file list
   const buildFileTree = (files: ProjectFile[]): FileTreeNode[] => {
@@ -229,11 +313,18 @@ export default function CodePage() {
     setOutput(prev => prev + '\n🚀 Starting preview server...');
     
     try {
-      // Use a random port between 3100-3199
-      const port = 3100 + Math.floor(Math.random() * 100);
-      const result = await sandbox.serveProject(activeProject.id, port);
-      setPreviewUrl(`http://localhost:${port}`);
-      setOutput(prev => prev + `\n✅ Preview available at: http://localhost:${port}`);
+      // Use a port within the allowed Docker range (3000-3010) which maps to (3002-3012)
+      const offset = Math.floor(Math.random() * 11); // 0 to 10
+      const internalPort = 3000 + offset;
+      const externalPort = internalPort + 2;
+      
+      // Use "npm run dev" to correctly serve Vite/React apps with proper MIME types
+      // We must bind to 0.0.0.0 so it's accessible outside the container
+      const command = `npm run dev -- --host 0.0.0.0 --port ${internalPort}`;
+
+      const result = await sandbox.serveProject(activeProject.id, internalPort, '.', command);
+      setPreviewUrl(`http://localhost:${externalPort}`);
+      setOutput(prev => prev + `\n✅ Preview available at: http://localhost:${externalPort}`);
     } catch (err: any) {
       setOutput(prev => prev + `\n❌ Error: ${err.message}`);
     } finally {
@@ -330,7 +421,7 @@ export default function CodePage() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Conectando ao sandbox...</p>
+          <p className="text-muted-foreground">Connecting to sandbox...</p>
         </div>
       </div>
     );
@@ -338,6 +429,20 @@ export default function CodePage() {
 
   return (
     <div className="flex h-full relative">
+      {/* Clone Loading Overlay */}
+      {isCloning && (
+          <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-card border border-border p-6 rounded-lg shadow-2xl max-w-md w-full text-center space-y-4">
+                  <GitBranch className="h-12 w-12 text-primary mx-auto animate-bounce" />
+                  <h3 className="text-xl font-bold">Setting up Environment</h3>
+                  <div className="space-y-2">
+                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                       <p className="text-sm text-muted-foreground">{cloneStatus}</p>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* Diff Viewer Overlay */}
       {showDiff && activeFile && (
           <DiffViewer 
@@ -350,7 +455,7 @@ export default function CodePage() {
       {/* Projects Sidebar */}
       <div className="w-56 border-r border-border bg-card/50 flex flex-col">
         <div className="p-3 border-b border-border flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-primary-glow">Projetos</h2>
+          <h2 className="text-sm font-semibold text-primary-glow">Projects</h2>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={createNewProject}>
             <Plus className="h-4 w-4" />
           </Button>
@@ -380,7 +485,7 @@ export default function CodePage() {
             </div>
           )) : (
             <p className="text-xs text-muted-foreground text-center py-4">
-              Nenhum projeto ainda
+              No projects
             </p>
           )}
         </ScrollArea>
@@ -447,7 +552,7 @@ export default function CodePage() {
                 <Textarea
                 value={editorContent}
                 onChange={e => setEditorContent(e.target.value)}
-                className="absolute inset-0 font-mono text-sm bg-[#1e1e2e] border-0 resize-none p-4 text-green-400 focus-visible:ring-0 rounded-none"
+                className="absolute inset-0 font-mono text-sm bg-[#1e1e2e] border-0 resize-none p-4 text-green-400 focus-visible:ring-0 rounded-none w-full h-full"
                 spellCheck={false}
                 />
             ) : (
@@ -455,8 +560,8 @@ export default function CodePage() {
                 <div className="p-8 rounded-full bg-secondary/20 mb-4 animate-pulse">
                     <Code2 className="h-12 w-12 opacity-20" />
                 </div>
-                <p className="text-sm font-medium">Nenhum artefato ativo</p>
-                <p className="text-xs opacity-50">Gere um componente ou código para visualizar aqui</p>
+                <p className="text-sm font-medium">No active file</p>
+                <p className="text-xs opacity-50">Select a file from the explorer</p>
                 </div>
             )}
           </div>
@@ -482,7 +587,7 @@ export default function CodePage() {
             )}
             <Button variant="ghost" size="sm" onClick={saveFile} disabled={!activeFile}>
               <Save className="h-4 w-4 mr-2" />
-              Salvar
+              Save
             </Button>
             <Button variant="ghost" size="sm" onClick={runNpmInstall} disabled={!activeProject || isRunning}>
               <Package className="h-4 w-4 mr-2" />
@@ -512,7 +617,7 @@ export default function CodePage() {
                 onClick={() => window.open(previewUrl, '_blank')}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Abrir
+                Open
               </Button>
             )}
           </div>
@@ -534,3 +639,4 @@ export default function CodePage() {
     </div>
   );
 }
+

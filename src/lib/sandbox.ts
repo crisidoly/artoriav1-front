@@ -4,6 +4,7 @@
  */
 
 import axios from 'axios';
+import { api } from './api';
 
 const SANDBOX_URL = process.env.NEXT_PUBLIC_SANDBOX_URL || 'http://localhost:5001';
 
@@ -106,9 +107,14 @@ export async function testProject(projectId: string): Promise<CommandResult & { 
 export async function serveProject(
   projectId: string,
   port: number = 3000,
-  directory: string = '.'
+  directory: string = '.',
+  commandStr?: string
 ): Promise<{ url: string; port: number }> {
-  const { data } = await sandboxApi.post(`/project/${projectId}/serve`, { port, directory });
+  const { data } = await sandboxApi.post(`/project/${projectId}/serve`, { 
+    port, 
+    directory,
+    command: commandStr 
+  });
   return { url: data.url, port };
 }
 
@@ -132,4 +138,37 @@ export async function checkSandboxHealth(): Promise<boolean> {
   }
 }
 
+// === GIT OPERATIONS ===
+
+/**
+ * Clones a GitHub repository into the sandbox using the backend tool.
+ * This ensures authentication and volume handling are managed securely.
+ */
+export async function cloneProject(repoUrl: string, name?: string): Promise<{ projectId: string }> {
+  // We use the main backend API to execute the tool, leveraging server-side auth injection
+  const { data } = await api.post('/api/tools/execute', {
+    toolName: 'cloneGitHubRepo',
+    parameters: {
+      repoUrl,
+      projectName: name
+    },
+    userId: 'frontend-user' // Backend will override with actual authenticated user
+  });
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to clone repository');
+  }
+
+  // The tool returns { success: true, data: { projectId: ... } }
+  // But /execute wraps it in { result: { success: true, data: ... } }
+  const toolResult = data.result;
+  
+  if (!toolResult.success) {
+      throw new Error(toolResult.error || 'Clone tool reported failure');
+  }
+
+  return toolResult.data;
+}
+
 export { sandboxApi };
+
