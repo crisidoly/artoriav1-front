@@ -1,7 +1,8 @@
 "use client";
 
+import { AIChatSidebar } from "@/components/code/AIChatSidebar";
+import { DiffViewer } from "@/components/code/DiffViewer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import * as sandbox from "@/lib/sandbox";
@@ -17,6 +18,7 @@ import {
     Play,
     Plus,
     Save,
+    Sparkles,
     Terminal,
     Trash2,
     X
@@ -56,6 +58,8 @@ export default function CodePage() {
   const [activeFile, setActiveFile] = useState<ProjectFile | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const [openFiles, setOpenFiles] = useState<ProjectFile[]>([]);
+  const [showAi, setShowAi] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
   
   // Terminal state
   const [output, setOutput] = useState<string>("");
@@ -332,27 +336,17 @@ export default function CodePage() {
     );
   }
 
-  if (!sandboxConnected) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Card className="max-w-md border-red-400/20 bg-red-400/5">
-          <CardContent className="p-6 text-center">
-            <Terminal className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Sandbox Offline</h2>
-            <p className="text-muted-foreground mb-4">
-              O container Docker do sandbox não está rodando. Execute:
-            </p>
-            <code className="block bg-black/50 p-3 rounded text-sm text-green-400">
-              docker-compose up -d node-sandbox
-            </code>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-full">
+    <div className="flex h-full relative">
+      {/* Diff Viewer Overlay */}
+      {showDiff && activeFile && (
+          <DiffViewer 
+            original={activeFile.content}
+            modified={editorContent}
+            onClose={() => setShowDiff(false)}
+          />
+      )}
+
       {/* Projects Sidebar */}
       <div className="w-56 border-r border-border bg-card/50 flex flex-col">
         <div className="p-3 border-b border-border flex items-center justify-between">
@@ -407,50 +401,68 @@ export default function CodePage() {
       )}
 
       {/* Main Editor Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* File Tabs */}
         {openFiles.length > 0 && (
-          <div className="h-9 border-b border-border flex items-center bg-card/30 overflow-x-auto">
-            {openFiles.map(file => (
-              <div
-                key={file.path}
-                onClick={() => { setActiveFile(file); setEditorContent(file.content); }}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 border-r border-border cursor-pointer text-sm group",
-                  activeFile?.path === file.path ? "bg-card text-white" : "text-muted-foreground hover:text-white"
-                )}
-              >
-                {getFileIcon(file.path.split('/').pop() || '')}
-                <span>{file.path.split('/').pop()}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); closeFile(file.path); }}
-                  className="opacity-0 group-hover:opacity-100 hover:text-red-400"
+          <div className="h-9 border-b border-border flex items-center bg-card/30 overflow-x-auto justify-between pr-4">
+            <div className="flex items-center h-full">
+                {openFiles.map(file => (
+                <div
+                    key={file.path}
+                    onClick={() => { setActiveFile(file); setEditorContent(file.content); }}
+                    className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 border-r border-border cursor-pointer text-sm group h-full",
+                    activeFile?.path === file.path ? "bg-card text-white" : "text-muted-foreground hover:text-white"
+                    )}
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
+                    {getFileIcon(file.path.split('/').pop() || '')}
+                    <span>{file.path.split('/').pop()}</span>
+                    <button
+                    onClick={(e) => { e.stopPropagation(); closeFile(file.path); }}
+                    className="opacity-0 group-hover:opacity-100 hover:text-red-400"
+                    >
+                    <X className="h-3 w-3" />
+                    </button>
+                </div>
+                ))}
+            </div>
+            
+            {/* AI Toggle */}
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn("h-7 gap-2", showAi && "text-purple-400 bg-purple-500/10")}
+                onClick={() => setShowAi(!showAi)}
+            >
+                <Sparkles className="h-3 w-3" />
+                AI Assist
+            </Button>
           </div>
         )}
 
         {/* Editor */}
-        <div className="flex-1 relative">
-          {activeFile ? (
-            <Textarea
-              value={editorContent}
-              onChange={e => setEditorContent(e.target.value)}
-              className="absolute inset-0 font-mono text-sm bg-[#1e1e2e] border-0 resize-none p-4 text-green-400 focus-visible:ring-0 rounded-none"
-              spellCheck={false}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-950/50">
-              <div className="p-8 rounded-full bg-secondary/20 mb-4 animate-pulse">
-                <Code2 className="h-12 w-12 opacity-20" />
-              </div>
-              <p className="text-sm font-medium">Nenhum artefato ativo</p>
-              <p className="text-xs opacity-50">Gere um componente ou código para visualizar aqui</p>
-            </div>
-          )}
+        <div className="flex-1 relative flex">
+          <div className="flex-1 relative">
+            {activeFile ? (
+                <Textarea
+                value={editorContent}
+                onChange={e => setEditorContent(e.target.value)}
+                className="absolute inset-0 font-mono text-sm bg-[#1e1e2e] border-0 resize-none p-4 text-green-400 focus-visible:ring-0 rounded-none"
+                spellCheck={false}
+                />
+            ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-950/50">
+                <div className="p-8 rounded-full bg-secondary/20 mb-4 animate-pulse">
+                    <Code2 className="h-12 w-12 opacity-20" />
+                </div>
+                <p className="text-sm font-medium">Nenhum artefato ativo</p>
+                <p className="text-xs opacity-50">Gere um componente ou código para visualizar aqui</p>
+                </div>
+            )}
+          </div>
+          
+          {/* AI SIDEBAR OVERLAY */}
+          {showAi && <AIChatSidebar onClose={() => setShowAi(false)} />}
         </div>
 
         {/* Toolbar */}
@@ -463,6 +475,11 @@ export default function CodePage() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            {activeFile && (
+                <Button variant="ghost" size="sm" onClick={() => setShowDiff(true)}>
+                    Diff View
+                </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={saveFile} disabled={!activeFile}>
               <Save className="h-4 w-4 mr-2" />
               Salvar

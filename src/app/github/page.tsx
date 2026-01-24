@@ -1,228 +1,317 @@
+
 "use client";
 
+import { RiskRadar } from "@/components/github/RiskRadar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { GitHubEvent, GitHubRepo, useGitHub } from "@/hooks/use-github";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-import {
-    Activity,
-    AlertCircle,
-    BookOpen,
-    GitBranch,
-    GitCommit,
-    Github,
-    GitPullRequest,
-    Loader2,
-    Star
-} from "lucide-react";
+import axios from "axios";
+import { AlertCircle, ExternalLink, Github, Lock, RefreshCw, Search, ShieldCheck, Star, Unlock } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+interface Repository {
+    id: number;
+    name: string;
+    full_name: string;
+    description: string | null;
+    html_url: string;
+    stargazers_count: number;
+    language: string | null;
+    updated_at: string;
+    private: boolean;
+    default_branch: string;
+    open_issues_count: number;
+    owner: {
+        login: string;
+    }
+}
+
+interface AnalysisData {
+    repository: any;
+    branches: any[];
+    recent_commits: any[];
+    ready_for_rag: boolean;
+}
 
 export default function GithubPage() {
-  const { getUser, getRepositories, getEvents, loading } = useGitHub();
-  const [user, setUser] = useState<any>(null);
-  const [repos, setRepos] = useState<GitHubRepo[]>([]);
-  const [events, setEvents] = useState<GitHubEvent[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+    const [repos, setRepos] = useState<Repository[]>([]);
+    const [filteredRepos, setFilteredRepos] = useState<Repository[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
+    const [isConnected, setIsConnected] = useState(true);
+    
+    // Analysis State
+    const [analyzing, setAnalyzing] = useState(false);
+    const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+    const [selectedRepoForAnalysis, setSelectedRepoForAnalysis] = useState<Repository | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoadingData(true);
-      try {
-        const [userData, reposData, eventsData] = await Promise.all([
-           getUser(),
-           getRepositories(),
-           getEvents()
-        ]);
+    useEffect(() => {
+        fetchRepos();
+    }, []);
+
+    useEffect(() => {
+        if (!search) {
+            setFilteredRepos(repos);
+        } else {
+            setFilteredRepos(repos.filter(r => 
+                r.name.toLowerCase().includes(search.toLowerCase()) || 
+                r.description?.toLowerCase().includes(search.toLowerCase())
+            ));
+        }
+    }, [search, repos]);
+
+    const fetchRepos = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get("http://localhost:3001/api/github/repositories", { withCredentials: true });
+            if (res.data.success) {
+                setRepos(res.data.data);
+                setIsConnected(true);
+            }
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                setIsConnected(false);
+            } else {
+                toast.error("Failed to load repositories");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConnect = () => {
+        window.location.href = "http://localhost:3001/api/auth/github";
+    };
+
+    const handleAnalyze = async (repo: Repository) => {
+        setSelectedRepoForAnalysis(repo);
+        setAnalyzing(true);
+        setAnalysisData(null);
         
-        if (userData) setUser(userData);
-        if (reposData) setRepos(reposData);
-        if (eventsData) setEvents(eventsData);
-        
-      } catch (error) {
-        console.error("Error loading GitHub data", error);
-      } finally {
-        setIsLoadingData(false);
-      }
-    }
-    fetchData();
-  }, [getUser, getRepositories, getEvents]);
+        try {
+            const res = await axios.get(`http://localhost:3001/api/github/repositories/${repo.owner.login}/${repo.name}/analyze`, { withCredentials: true });
+            if (res.data.success) {
+                setAnalysisData(res.data.data);
+            }
+        } catch (error) {
+            toast.error("Analysis failed");
+        } finally {
+            setAnalyzing(false);
+        }
+    };
 
-  // Calculate stats
-  const totalStars = repos.reduce((acc, repo) => acc + repo.stargazers_count, 0);
-  
-  // Format event message
-  const getEventMessage = (event: GitHubEvent) => {
-      switch (event.type) {
-          case 'PushEvent':
-              return `Pushed to ${event.payload?.ref?.replace('refs/heads/', '') || 'branch'}`;
-          case 'CreateEvent':
-              return `Created ${event.payload?.ref_type || 'element'}`;
-          case 'WatchEvent':
-              return 'Starred repository';
-          case 'PullRequestEvent':
-              return `${event.payload?.action} pull request`;
-          case 'IssuesEvent':
-               return `${event.payload?.action} issue`;
-          default:
-              return event.type;
-      }
-  };
+    const getLanguageColor = (lang: string | null) => {
+        if (!lang) return "bg-gray-500";
+        const colors: Record<string, string> = {
+            TypeScript: "bg-blue-500",
+            JavaScript: "bg-yellow-400",
+            Python: "bg-green-500",
+            Java: "bg-orange-500",
+            HTML: "bg-red-500",
+            CSS: "bg-purple-500",
+            Go: "bg-cyan-500",
+            Rust: "bg-orange-700"
+        };
+        return colors[lang] || "bg-blue-400";
+    };
 
-  const getEventIcon = (type: string) => {
-      switch (type) {
-          case 'PushEvent': return GitCommit;
-          case 'PullRequestEvent': return GitPullRequest;
-          case 'IssuesEvent': return AlertCircle;
-          default: return Activity;
-      }
-  };
-
-  if (isLoadingData) {
-      return <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>;
-  }
-
-  return (
-    <div className="p-8 space-y-8 h-full overflow-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/10 rounded-full">
-            {user?.avatar_url ? (
-                <img src={user.avatar_url} alt={user.login} className="h-8 w-8 rounded-full" />
-            ) : (
-                <Github className="h-8 w-8 text-white" />
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-1">{user?.login || 'GitHub User'}</h1>
-            <p className="text-muted-foreground">{user?.bio || '@developer • Pro Account'}</p>
-          </div>
-        </div>
-        <Button className="bg-[#2da44e] hover:bg-[#2c974b] text-white">
-          <GitPullRequest className="h-4 w-4 mr-2" />
-          Novo Pull Request
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Repositories", value: user?.public_repos || repos.length, icon: BookOpen, color: "text-white" },
-          { label: "Stars", value: totalStars, icon: Star, color: "text-yellow-400" },
-          { label: "Followers", value: user?.followers || 0, icon: GitPullRequest, color: "text-blue-400" }, // Using Followers as PRs API is separate and heavier
-          { label: "Following", value: user?.following || 0, icon: AlertCircle, color: "text-red-400" },
-        ].map((stat, i) => (
-          <Card key={i} className="bg-[#0d1117] border-[#30363d]">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-              </div>
-              <stat.icon className={cn("h-8 w-8 opacity-50", stat.color)} />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content: Repos */}
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
-            Top Repositories
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {repos.slice(0, 6).map(repo => (
-              <Card key={repo.id} className="bg-[#0d1117] border-[#30363d] hover:border-gray-500 transition-colors cursor-pointer group">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-blue-400 group-hover:underline truncate pr-2">{repo.name}</h3>
-                    <span className="text-xs text-muted-foreground border border-[#30363d] rounded-full px-2 py-0.5 shrink-0">{repo.private ? 'Private' : 'Public'}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span className={cn("w-3 h-3 rounded-full bg-blue-400")} /> 
-                      {/* Language color mapping could be added if critical */}
-                      {repo.language || 'N/A'}
-                    </div>
-                    <div className="flex items-center gap-1 hover:text-blue-400">
-                      <Star className="h-3 w-3" />
-                      {repo.stargazers_count}
-                    </div>
-                    <div className="flex items-center gap-1 hover:text-blue-400">
-                      <GitBranch className="h-3 w-3" />
-                      {/* Forks count not in interface currently, default 0 or update interface if critical. 
-                          Wait, check interface... GitHubRepo has fork count? 
-                          I looked at use-github.ts, it doesn't have fork count in interface!
-                          But API 'github.ts' returns full object from axios.
-                          TypeScript interface might be incomplete but data is likely there.
-                          I'll check usage and maybe just omit or assume 0 for now to avoid errors if strict.
-                          Actually I'll cast to any if needed or just use 0.
-                       */}
-                      {(repo as any).forks_count || 0}
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground pt-2 line-clamp-2 min-h-[2.5em]">{repo.description || "No description provided."}</p>
-                  <p className="text-[10px] text-gray-500">Updated {formatDistanceToNow(new Date(repo.updated_at), { addSuffix: true })}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Sidebar: Activity */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <Activity className="h-5 w-5 text-muted-foreground" />
-            Recent Activity
-          </h2>
-          <Card className="bg-[#0d1117] border-[#30363d]">
-            <CardContent className="p-0">
-              <ScrollArea className="h-[400px]">
-                <div className="divide-y divide-[#30363d]">
-                  {events.map((act) => {
-                    const Icon = getEventIcon(act.type);
-                    return (
-                    <div key={act.id} className="p-4 flex gap-3 hover:bg-white/5 transition-colors">
-                      <div className="mt-1">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="text-blue-400 font-medium cursor-pointer hover:underline">{act.repo.name}</span>
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">{getEventMessage(act)}</p>
-                        <p className="text-xs text-gray-500 mt-1">{formatDistanceToNow(new Date(act.created_at), { addSuffix: true })}</p>
-                      </div>
-                    </div>
-                  )})}
+    if (!isConnected && !loading) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center space-y-6">
+                <Github className="h-24 w-24 text-muted-foreground opacity-20" />
+                <div className="text-center space-y-2">
+                    <h1 className="text-2xl font-bold">GitHub Not Connected</h1>
+                    <p className="text-muted-foreground max-w-md">
+                        Connect your GitHub account to access your repositories, enable automated code reviews, and sync DevOps workflows.
+                    </p>
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                <Button onClick={handleConnect} size="lg" className="gap-2">
+                    <Github className="h-5 w-5" />
+                    Connect GitHub
+                </Button>
+            </div>
+        );
+    }
 
-          <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/20">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-green-400 mb-2">Contribution Graph</h3>
-              <div className="flex gap-1 flex-wrap">
-                {Array.from({ length: 50 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "w-3 h-3 rounded-sm",
-                      Math.random() > 0.7 ? "bg-[#2da44e]" : 
-                      Math.random() > 0.4 ? "bg-[#0e4429]" : "bg-[#161b22]"
-                    )} 
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-3">Visual representation only</p>
-            </CardContent>
-          </Card>
+    return (
+        <div className="h-full overflow-y-auto p-8 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                        <Github className="h-8 w-8 text-white" />
+                        DEVOPS CENTER
+                    </h1>
+                    <p className="text-muted-foreground text-sm mt-1">
+                        Active repositories and pipeline status.
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                     <Button variant="outline" size="icon" onClick={fetchRepos} title="Refresh Repositories">
+                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                    <div className="relative w-64">
+                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                         <Input 
+                            placeholder="Search repos..." 
+                            className="pl-9 bg-secondary/50 border-white/10"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                         />
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Repo List */}
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="flex items-center justify-between">
+                         <h2 className="text-xl font-semibold">Your Repositories</h2>
+                         <Badge variant="outline" className="text-xs">{filteredRepos.length} found</Badge>
+                    </div>
+
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-24 w-full bg-secondary/30 animate-pulse rounded-lg" />
+                            ))}
+                        </div>
+                    ) : ( 
+                        <div className="grid gap-3">
+                            {filteredRepos.map(repo => (
+                                <Card key={repo.id} className="group hover:border-primary/50 transition-colors bg-secondary/10 border-white/5">
+                                    <div className="p-4 flex items-start justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                {repo.private ? <Lock className="h-3 w-3 text-amber-500" /> : <Unlock className="h-3 w-3 text-muted-foreground" />}
+                                                <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-lg hover:underline decoration-primary underline-offset-4">
+                                                    {repo.name}
+                                                </a>
+                                                <Badge variant="secondary" className="text-[10px] h-5">{repo.default_branch}</Badge>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground line-clamp-1 max-w-md">
+                                                {repo.description || "No description provided."}
+                                            </p>
+                                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`w-2 h-2 rounded-full ${getLanguageColor(repo.language)}`} />
+                                                    {repo.language || "Unknown"}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Star className="h-3 w-3 text-yellow-500" />
+                                                    {repo.stargazers_count}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <AlertCircle className="h-3 w-3" />
+                                                    {repo.open_issues_count} issues
+                                                </div>
+                                                <div>Updated {new Date(repo.updated_at).toLocaleDateString()}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="sm" variant="outline" className="h-8 gap-1" asChild>
+                                                <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                                                    <ExternalLink className="h-3 w-3" />
+                                                    View
+                                                </a>
+                                            </Button>
+                                            
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button size="sm" className="h-8 gap-1" onClick={() => handleAnalyze(repo)}>
+                                                        <ShieldCheck className="h-3 w-3" />
+                                                        Analyze
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-2xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle className="flex items-center gap-2">
+                                                            <ShieldCheck className="h-5 w-5 text-primary" />
+                                                            Analysis: {repo.name}
+                                                        </DialogTitle>
+                                                        <DialogDescription>
+                                                            Deep inspection of repository structure and activity.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    
+                                                    {analyzing || !analysisData ? (
+                                                        <div className="py-8 flex flex-col items-center justify-center space-y-4">
+                                                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                                            <p className="text-sm text-muted-foreground">Scanning repository...</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-6">
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <Card className="bg-secondary/50">
+                                                                    <CardHeader className="py-3">
+                                                                        <CardTitle className="text-sm">Structure</CardTitle>
+                                                                    </CardHeader>
+                                                                    <CardContent className="py-2 text-sm">
+                                                                        <ul className="space-y-1">
+                                                                            <li><strong>Default Branch:</strong> {analysisData.repository.default_branch}</li>
+                                                                            <li><strong>Size:</strong> {(analysisData.repository.size / 1024).toFixed(1)} MB</li>
+                                                                            <li><strong>Issues:</strong> {analysisData.repository.open_issues_count}</li>
+                                                                        </ul>
+                                                                    </CardContent>
+                                                                </Card>
+                                                                <Card className="bg-secondary/50">
+                                                                    <CardHeader className="py-3">
+                                                                        <CardTitle className="text-sm">RAG Readiness</CardTitle>
+                                                                    </CardHeader>
+                                                                    <CardContent className="py-2 text-sm">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className={`h-2 w-2 rounded-full ${analysisData.ready_for_rag ? 'bg-green-500' : 'bg-red-500'}`} />
+                                                                            <span>{analysisData.ready_for_rag ? "Ready" : "Not Optimized"}</span>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                                            Repo can be indexed for semantic search.
+                                                                        </p>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </div>
+
+                                                            <div>
+                                                                <h3 className="font-semibold mb-2 text-sm">Recent Activity</h3>
+                                                                <ScrollArea className="h-[200px] border rounded-md p-2">
+                                                                    <div className="space-y-2">
+                                                                        {analysisData.recent_commits.map((commit: any) => (
+                                                                            <div key={commit.sha} className="text-sm p-2 bg-secondary/20 rounded hover:bg-secondary/40 transition-colors">
+                                                                                <div className="flex justify-between items-start mb-1">
+                                                                                    <span className="font-mono text-xs text-muted-foreground">{commit.sha.substring(0, 7)}</span>
+                                                                                    <span className="text-xs text-muted-foreground">
+                                                                                        {new Date(commit.commit.author.date).toLocaleDateString()}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <p className="line-clamp-2">{commit.commit.message}</p>
+                                                                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                                                                    by <strong>{commit.commit.author.name}</strong>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </ScrollArea>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Sidebar (RiskRadar) */}
+                <div className="space-y-6">
+                    <RiskRadar />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

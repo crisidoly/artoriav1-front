@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ const CustomToolbar = (toolbar: any) => {
   return (
     <div className="flex items-center justify-between mb-6 p-2 rounded-lg bg-secondary/20 border border-primary/20 backdrop-blur-sm">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={goToBack} className="border-primary/50 text-primary hover:bg-primary/20 hover:text-primary-glow">
+        <Button variant="outline" size="icon" onClick={goToBack} className="bConorder-primary/50 text-primary hover:bg-primary/20 hover:text-primary-glow">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button variant="outline" onClick={goToCurrent} className="border-primary/50 text-foreground hover:bg-primary/20">

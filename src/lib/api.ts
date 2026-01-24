@@ -11,6 +11,22 @@ export const api = axios.create({
   },
 });
 
+// Request Interceptor to add Authorization header
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("artoria_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Response Interceptor for global error handling
 api.interceptors.response.use(
   (response) => response,

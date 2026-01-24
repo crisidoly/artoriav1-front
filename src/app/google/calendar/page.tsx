@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomCalendar } from "@/components/calendar/CustomCalendar";
+import { AIPlannerWidget } from "@/components/tasks/AIPlannerWidget";
 import { Button } from "@/components/ui/button";
 import { useCreateEvent, useEvents } from "@/hooks/use-events";
 import { Plus } from "lucide-react";
@@ -47,12 +48,15 @@ export default function CalendarPage() {
           <h1 className="text-3xl font-bold tracking-tight text-primary-glow">Agenda</h1>
           <p className="text-muted-foreground">Gerencie sua agenda e tarefas do agente.</p>
         </div>
-        <Button 
-            onClick={handleCreateEvent}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(124,58,237,0.3)]"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Criar Evento
-        </Button>
+        <div className="flex gap-3">
+            <AIPlannerWidget />
+            <Button 
+                onClick={handleCreateEvent}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(124,58,237,0.3)]"
+            >
+            <Plus className="mr-2 h-4 w-4" /> Criar Evento
+            </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0">

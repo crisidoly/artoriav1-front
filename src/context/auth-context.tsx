@@ -99,6 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event.data?.type === 'OAUTH_SUCCESS') {
            console.log("✅ [AuthContext] Received OAuth Success Message:", event.data);
            
+           // Store token in localStorage
+           if (event.data.token) {
+             localStorage.setItem('artoria_token', event.data.token);
+             console.log("🎫 [AuthContext] Token saved to localStorage");
+           }
+           
            // Force refresh user data immediately
            await refetch();
            
@@ -124,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await api.post("/api/auth/logout");
+      localStorage.removeItem("artoria_token"); // Clear token
       queryClient.setQueryData(["auth-user"], null);
       router.push("/login");
     } catch (error) {

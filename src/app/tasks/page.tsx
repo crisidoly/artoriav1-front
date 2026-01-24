@@ -1,5 +1,7 @@
 "use client";
 
+import { AIPlannerWidget } from "@/components/tasks/AIPlannerWidget";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,9 +35,9 @@ export default function TasksPage() {
     const [filter, setFilter] = useState("");
 
     // Group tasks by status
-    const todoTasks = tasks?.filter(t => t.status === 'todo') || [];
-    const inProgressTasks = tasks?.filter(t => t.status === 'in-progress') || [];
-    const doneTasks = tasks?.filter(t => t.status === 'done') || [];
+    const todoTasks = tasks?.filter((t: ApiTask) => t.status === 'todo') || [];
+    const inProgressTasks = tasks?.filter((t: ApiTask) => t.status === 'in-progress') || [];
+    const doneTasks = tasks?.filter((t: ApiTask) => t.status === 'done') || [];
 
     // Loading skeleton or simplified loading state
     if (isLoading) {
@@ -55,6 +57,7 @@ export default function TasksPage() {
                     <p className="text-muted-foreground">Gerencie a fila e prioridades do seu agente.</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <AIPlannerWidget />
                     <Button onClick={() => createTask.mutate({ title: "Nova Tarefa", status: "todo", priority: "medium" })}>
                         <Plus className="mr-2 h-4 w-4" />
                         Nova Tarefa

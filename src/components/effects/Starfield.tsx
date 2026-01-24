@@ -11,7 +11,7 @@ const Starfield: React.FC<{ resonance?: boolean }> = ({ resonance }) => {
 
     let animationFrameId: number;
     let stars: any[] = [];
-    const starCount = 400;
+    const starCount = 150; // Optimized from 400
 
     const resize = () => {
       canvas.width = window.innerWidth;

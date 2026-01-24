@@ -8,23 +8,23 @@ import { useVoiceRecording } from "@/hooks/use-voice-recording";
 import { cn } from "@/lib/utils";
 import { ChatMessage, useChatStore } from "@/store/chat";
 import {
-    Code2,
-    Eye,
-    FileText,
-    Image as ImageIcon,
-    Link as LinkIcon,
-    Loader2,
-    Mail,
-    MessageSquare,
-    Mic,
-    MoreVertical,
-    Paperclip,
-    Play,
-    Plus,
-    Send,
-    TableProperties,
-    Volume2,
-    X
+  Brain,
+  Code2,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Loader2,
+  Mail,
+  Mic,
+  MoreVertical,
+  Paperclip,
+  Play,
+  Plus,
+  Send,
+  TableProperties,
+  Volume2,
+  X
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -416,7 +416,6 @@ function MessageContent({ message }: { message: ChatMessage }) {
 // === MAIN CHAT SIDEBAR COMPONENT ===
 export function ChatSidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
   const [inputValue, setInputValue] = useState("");
   
   if (pathname?.startsWith('/auth/')) return null;
@@ -427,7 +426,7 @@ export function ChatSidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use real store
-  const { messages, isConnected, isTyping, sendMessage, sendAudioMessage, clearMessages } = useChatStore();
+  const { messages, isConnected, isTyping, sendMessage, sendAudioMessage, setSidebarOpen } = useChatStore();
   
   // Voice recording hook
   const { isRecording, isSupported: micSupported, duration, startRecording, stopRecording, cancelRecording, error: micError } = useVoiceRecording({
@@ -481,48 +480,11 @@ export function ChatSidebar() {
     }
   };
 
-  // Mobile Trigger - moved to top
-  const MobileTrigger = (
-    <div className={cn("fixed top-4 right-4 z-50 lg:hidden", isOpen && "hidden")}>
-      <Button
-        size="icon"
-        className="h-14 w-14 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.3)] bg-primary hover:bg-primary/90"
-        onClick={() => setIsOpen(true)}
-      >
-        <MessageSquare className="h-6 w-6" />
-      </Button>
-    </div>
-  );
-
-  if (!isOpen) {
-    return (
-      <>
-        {MobileTrigger}
-        <div className="hidden lg:flex fixed top-4 right-4 z-50">
-          <Button
-            size="icon"
-            className="h-12 w-12 rounded-full shadow-lg bg-card border border-primary/20 hover:bg-primary/10"
-            onClick={() => setIsOpen(true)}
-          >
-            <MessageSquare className="h-5 w-5 text-primary" />
-          </Button>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
-      {/* Mobile Overlay */}
-      <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
-        onClick={() => setIsOpen(false)}
-      />
-
       <aside 
         className={cn(
-          "flex flex-col h-[100dvh] bg-card/95 backdrop-blur-md transition-all duration-300 shadow-2xl z-50",
-          "fixed inset-y-0 right-0 w-full lg:w-full lg:static lg:h-full lg:border-0 border-l border-border"
+          "flex flex-col h-[100dvh] bg-card/95 backdrop-blur-md transition-all duration-300 shadow-2xl relative w-full h-full"
         )}
       >
         {/* Header with TTS Button */}
@@ -533,8 +495,8 @@ export function ChatSidebar() {
                 "h-2 w-2 rounded-full absolute -right-0.5 -top-0.5 z-10",
                 isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
               )} />
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
-                <MessageSquare className="h-4 w-4 text-white" />
+              <div className="h-10 w-10 rounded-full overflow-hidden border border-primary/30 shadow-lg">
+                <img src="/logo.jpg" alt="ArtorIA Logo" className="w-full h-full object-cover" />
               </div>
             </div>
             <div>
@@ -563,7 +525,7 @@ export function ChatSidebar() {
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <MoreVertical className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -582,17 +544,18 @@ export function ChatSidebar() {
               >
                 {/* Avatar */}
                 <div className={cn(
-                  "h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center mt-1",
+                  "h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center mt-1 overflow-hidden border border-primary/20",
                   msg.role === 'assistant' 
-                    ? "bg-gradient-to-br from-primary/30 to-purple-600/30" 
+                    ? "bg-black" 
                     : "bg-accent-cyan/20",
                   msg.type === 'thought' && "scale-75 opacity-50"
                 )}>
                   {msg.role === 'assistant' ? (
-                    <MessageSquare className={cn(
-                      "h-4 w-4",
-                      msg.type === 'thought' ? "text-muted-foreground" : "text-primary"
-                    )} />
+                    msg.type === 'thought' ? (
+                        <Brain className="h-4 w-4 text-muted-foreground animate-pulse" />
+                    ) : (
+                        <img src="/logo.jpg" alt="ArtorIA" className="w-full h-full object-cover" />
+                    )
                   ) : (
                     <span className="text-[10px] font-bold text-accent-cyan">EU</span>
                   )}
@@ -625,12 +588,13 @@ export function ChatSidebar() {
             {isTyping && (
               <div className="flex gap-3">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/30 to-purple-600/30 flex-shrink-0 flex items-center justify-center mt-1">
-                  <MessageSquare className="h-4 w-4 text-primary" />
+                  <Brain className="h-4 w-4 text-primary animate-pulse" />
                 </div>
                 <div className="bg-secondary/50 p-3 rounded-2xl rounded-tl-sm text-sm border border-border/30 flex items-center gap-1.5">
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                  <span className="text-xs text-muted-foreground font-medium animate-pulse">ArtorIA thinking...</span>
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
                 </div>
               </div>
             )}

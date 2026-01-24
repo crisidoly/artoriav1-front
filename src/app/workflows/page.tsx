@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkflowBuilder } from "@/components/workflows/WorkflowBuilder";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
@@ -10,8 +11,11 @@ import {
     ArrowRight,
     CheckCircle,
     Clock,
+    Layout,
+    List,
     Loader2,
     Play,
+    Plus,
     RefreshCw,
     XCircle
 } from "lucide-react";
@@ -44,13 +48,13 @@ export default function WorkflowsPage() {
   const [selected, setSelected] = useState<ActiveWorkflow | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'monitor' | 'builder'>('monitor');
 
   const fetchWorkflows = async () => {
     try {
       const res = await api.get('/api/admin/active-workflows').catch(() => ({ data: { workflows: [] } }));
       if (res.data?.workflows) {
         setWorkflows(res.data.workflows);
-        // Auto-select first if none selected
         if (!selected && res.data.workflows.length > 0) {
           setSelected(res.data.workflows[0]);
         }
@@ -65,7 +69,6 @@ export default function WorkflowsPage() {
 
   useEffect(() => {
     fetchWorkflows();
-    // Poll every 3 seconds for live updates
     const interval = setInterval(fetchWorkflows, 3000);
     return () => clearInterval(interval);
   }, []);
@@ -102,22 +105,52 @@ export default function WorkflowsPage() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando workflows ativos...</p>
+          <p className="text-muted-foreground">Carregando Automation Studio...</p>
         </div>
       </div>
     );
   }
 
+  // BUILDER MODE
+  if (viewMode === 'builder') {
+      return (
+          <div className="h-full flex flex-col">
+              <div className="h-14 border-b border-border bg-card/50 flex items-center justify-between px-4 shrink-0">
+                  <div className="flex items-center gap-4">
+                      <Button variant="ghost" size="sm" onClick={() => setViewMode('monitor')}>
+                          <ArrowRight className="h-4 w-4 rotate-180 mr-2" /> Back
+                      </Button>
+                      <h2 className="text-lg font-bold text-white">Visual Workflow Builder</h2>
+                  </div>
+              </div>
+              <div className="flex-1 bg-black overflow-hidden relative">
+                  <WorkflowBuilder />
+              </div>
+          </div>
+      );
+  }
+
+  // MONITOR MODE
   return (
     <div className="flex h-full">
       {/* Workflow List */}
       <div className="w-80 border-r border-border bg-card/50 flex flex-col">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold text-primary-glow flex items-center gap-2">
-            <Activity className="h-5 w-5" /> Workflows Ativos
-          </h2>
-          <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+        <div className="p-4 border-b border-border space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-primary-glow flex items-center gap-2">
+                <Activity className="h-5 w-5" /> Active Flows
+            </h2>
+            <div className="flex gap-1">
+                <Button variant="ghost" size="icon" onClick={() => setViewMode('builder')} className="text-primary hover:bg-primary/10">
+                    <Layout className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing}>
+                    <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+                </Button>
+            </div>
+          </div>
+          <Button className="w-full bg-primary hover:bg-primary/90" size="sm" onClick={() => setViewMode('builder')}>
+              <Plus className="h-4 w-4 mr-2" /> New Workflow
           </Button>
         </div>
         <ScrollArea className="flex-1">
@@ -174,11 +207,11 @@ export default function WorkflowsPage() {
             <Card className="border-white/5">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Play className="h-5 w-5 text-primary" />
-                  Plano de Execução
+                  <List className="h-5 w-5 text-primary" />
+                  Execution Trace
                 </CardTitle>
                 <CardDescription>
-                  {selected.plan?.length || 0} passos • 
+                  {selected.plan?.length || 0} steps • 
                   Status: {selected.status}
                 </CardDescription>
               </CardHeader>
@@ -250,7 +283,7 @@ export default function WorkflowsPage() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2 text-green-400">
                     <CheckCircle className="h-5 w-5" />
-                    Resultado
+                    Resultado Final
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -265,8 +298,8 @@ export default function WorkflowsPage() {
           <div className="h-full flex items-center justify-center text-center text-muted-foreground">
             <div>
               <Activity className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <h2 className="text-xl font-semibold text-white mb-2">Workflow Visualizer</h2>
-              <p>Selecione um workflow para visualizar<br />o plano de execução em tempo real</p>
+              <h2 className="text-xl font-semibold text-white mb-2">Workflow Monitor</h2>
+              <p>Selecione um workflow para visualizar<br />o trace de execução em tempo real</p>
             </div>
           </div>
         )}

@@ -12,7 +12,11 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http
 
 const socket = io(SOCKET_URL, {
   path: '/ws',
-  autoConnect: false // Só conecta quando o componente abrir
+  autoConnect: false, // Só conecta quando o componente abrir
+  auth: (cb) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('artoria_token') : null;
+    cb({ token });
+  }
 });
 
 export const TerminalLog = ({ flowId }: { flowId?: string }) => {

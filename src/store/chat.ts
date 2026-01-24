@@ -47,6 +47,8 @@ interface ChatState {
   clearMessages: () => void;
   setConnected: (connected: boolean) => void;
   setActiveArtifact: (artifact: ChatMessage | null) => void;
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 // Helper to extract artifact from content
@@ -392,4 +394,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearMessages: () => set({ messages: [], history: [], conversationId: null, activeArtifact: null }),
   setConnected: (connected) => set({ isConnected: connected }),
   setActiveArtifact: (artifact) => set({ activeArtifact: artifact }),
+  isSidebarOpen: true,
+  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
 }));

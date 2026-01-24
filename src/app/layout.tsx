@@ -1,7 +1,5 @@
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { InteractionArea } from "@/components/layout/InteractionArea";
-import { MainLayoutWrapper } from "@/components/layout/MainLayoutWrapper";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { WorkspaceLayout } from "@/components/layout/WorkspaceLayout";
+import Starfield from "@/components/ui/Starfield";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -25,31 +23,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased overflow-hidden",
+          "min-h-screen bg-background font-sans antialiased overflow-hidden relative selection:bg-primary/30",
           inter.variable
         )}
       >
+        <Starfield />
         <Providers>
-          <div className="flex h-screen w-full">
-            {/* Left Sidebar (Fixed) */}
-            <AppSidebar />
-
-            <ResizablePanelGroup orientation="horizontal" className="flex-1">
-              {/* Main Workspace (Dashboard/Pages) */}
-              <ResizablePanel defaultSize={60} minSize={30}>
-                <MainLayoutWrapper>
-                  {children}
-                </MainLayoutWrapper>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle className="bg-primary/10 hover:bg-primary/30 transition-colors" />
-
-              {/* Interaction Area (Chat + Canvas) */}
-              <ResizablePanel defaultSize={40} minSize={25}>
-                <InteractionArea />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </div>
+          <WorkspaceLayout>
+            {children}
+          </WorkspaceLayout>
         </Providers>
       </body>
     </html>
