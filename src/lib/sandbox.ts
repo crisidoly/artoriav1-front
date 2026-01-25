@@ -17,15 +17,22 @@ export interface SandboxProject {
   id: string;
   name: string;
   type: string;
-  files: string[];
+  fileCount?: number;
   createdAt: string;
   isServing: boolean;
+  serveUrl?: string | null;
+  servePort?: number | null;
 }
 
 export interface SandboxFile {
   path: string;
   content: string;
   size?: number;
+}
+
+export async function stopProject(projectId: string): Promise<{ success: boolean; message: string }> {
+  const { data } = await sandboxApi.post(`/project/${projectId}/stop`);
+  return data;
 }
 
 export interface CommandResult {

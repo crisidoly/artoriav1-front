@@ -2,6 +2,7 @@
 
 import { AIChatSidebar } from "@/components/code/AIChatSidebar";
 import { DiffViewer } from "@/components/code/DiffViewer";
+import { SandboxManager } from "@/components/code/SandboxManager";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,7 @@ import {
   Folder,
   GitBranch,
   Loader2,
+  MessageCircle,
   Package,
   Play,
   Plus,
@@ -38,9 +40,11 @@ interface Project {
   id: string;
   name: string;
   type: string;
-  files: string[];
+  fileCount?: number;
   createdAt: string;
   isServing: boolean;
+  serveUrl?: string | null;
+  servePort?: number | null;
 }
 
 interface FileTreeNode {
@@ -567,7 +571,14 @@ export default function CodePage() {
           </div>
           
           {/* AI SIDEBAR OVERLAY */}
-          {showAi && <AIChatSidebar onClose={() => setShowAi(false)} />}
+          {showAi && (
+            <AIChatSidebar 
+              onClose={() => setShowAi(false)} 
+              projectId={activeProject?.id}
+              activeFilePath={activeFile?.path}
+              activeFileContent={editorContent}
+            />
+          )}
         </div>
 
         {/* Toolbar */}
@@ -620,6 +631,7 @@ export default function CodePage() {
                 Open
               </Button>
             )}
+            <SandboxManager />
           </div>
         </div>
 
@@ -636,6 +648,26 @@ export default function CodePage() {
           </ScrollArea>
         </div>
       </div>
+
+      {/* Floating AI Chat Button */}
+      <button
+        onClick={() => setShowAi(!showAi)}
+        className={cn(
+          "fixed bottom-24 right-6 z-30 p-4 rounded-full shadow-2xl transition-all duration-300 group",
+          showAi 
+            ? "bg-purple-600 text-white scale-95" 
+            : "bg-gradient-to-br from-purple-600 to-indigo-600 text-white hover:scale-110 hover:shadow-purple-500/40"
+        )}
+        title="Abrir Chat AI"
+      >
+        <MessageCircle className="h-6 w-6" />
+        {!showAi && (
+          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-purple-500"></span>
+          </span>
+        )}
+      </button>
     </div>
   );
 }

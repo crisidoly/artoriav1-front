@@ -5,8 +5,6 @@ import { Background, Controls, Edge, MiniMap, Node, ReactFlow, useEdgesState, us
 import { Play, Plus, Save } from "lucide-react";
 import { useCallback } from 'react';
 
-"use client";
-
 import {
     Dialog,
     DialogContent,

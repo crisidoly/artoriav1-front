@@ -1,8 +1,7 @@
-"use client";
-
+import { api } from "@/lib/api";
 import { OrbitControls, Stars, Text } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 // --- TYPES ---
@@ -12,101 +11,128 @@ interface MemoryNode {
   type: 'core' | 'fact' | 'ephemeral';
   position: [number, number, number];
   connections: string[];
+  qualityScore?: number;
+  accessCount?: number;
 }
 
-// --- MOCK DATA ---
-const INITIAL_NODES: MemoryNode[] = [
-  { id: 'user', label: 'User (You)', type: 'core', position: [0, 0, 0], connections: ['work', 'health', 'home'] },
-  { id: 'work', label: 'Work', type: 'fact', position: [2, 1, 0], connections: ['user', 'project_alpha'] },
-  { id: 'project_alpha', label: 'Project Alpha', type: 'ephemeral', position: [3, 2, 1], connections: ['work'] },
-  { id: 'health', label: 'Health', type: 'fact', position: [-2, 1, 1], connections: ['user', 'gym'] },
-  { id: 'gym', label: 'Gym Schedule', type: 'ephemeral', position: [-3, 2, 2], connections: ['health'] },
-  { id: 'home', label: 'Home', type: 'fact', position: [0, -2, 1], connections: ['user', 'iot'] },
-  { id: 'iot', label: 'IoT Devices', type: 'ephemeral', position: [1, -3, 2], connections: ['home'] },
-];
-
-function Node({ node, isActive, onClick }: { node: MemoryNode; isActive: boolean; onClick: (id: string) => void }) {
+function Node({ node, isActive, onClick }: { node: MemoryNode; isActive: boolean; onClick: (node: MemoryNode) => void }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHover] = useState(false);
 
   useFrame((state) => {
     if (meshRef.current) {
-      if (node.type === 'core') {
-        meshRef.current.rotation.y += 0.01;
-      } else {
-        // Floating animation
-        meshRef.current.position.y = node.position[1] + Math.sin(state.clock.elapsedTime + node.position[0]) * 0.1;
-      }
+        // Subtle drift
+        meshRef.current.position.y = node.position[1] + Math.sin(state.clock.elapsedTime * 0.5 + node.position[0]) * 0.05;
     }
   });
 
   const color = useMemo(() => {
     if (isActive) return "#facc15"; // Yellow
     if (hovered) return "#60a5fa"; // Blue hover
-    switch (node.type) {
-      case 'core': return "#ef4444"; // Red
-      case 'fact': return "#3b82f6"; // Blue
-      default: return "#10b981"; // Green
-    }
-  }, [node.type, hovered, isActive]);
+    
+    // Scale color by qualityScore
+    const quality = node.qualityScore || 1.0;
+    if (quality > 1.2) return "#a855f7"; // Purple (High quality)
+    if (quality < 0.9) return "#f43f5e"; // Rose (Low quality)
+    return "#3b82f6"; // Primary blue
+  }, [node.qualityScore, hovered, isActive]);
 
-  const size = node.type === 'core' ? 0.8 : node.type === 'fact' ? 0.5 : 0.3;
+  // Size influenced by popularity (accessCount)
+  const baseSize = node.type === 'core' ? 0.6 : 0.4;
+  const popularityBonus = Math.min((node.accessCount || 0) * 0.05, 0.4);
+  const size = baseSize + popularityBonus;
 
   return (
     <group position={node.position}>
       <mesh
         ref={meshRef}
-        onClick={(e) => { e.stopPropagation(); onClick(node.id); }}
+        onClick={(e) => { e.stopPropagation(); onClick(node); }}
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
       >
-        <sphereGeometry args={[size, 32, 32]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={isActive ? 0.8 : 0.2} wireframe={node.type === 'ephemeral'} />
+        <sphereGeometry args={[size, 16, 16]} />
+        <meshStandardMaterial 
+            color={color} 
+            emissive={color} 
+            emissiveIntensity={hovered || isActive ? 1 : 0.3} 
+            transparent
+            opacity={0.8}
+        />
       </mesh>
-      <Text
-        position={[0, size + 0.4, 0]}
-        fontSize={0.3}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
-      >
-        {node.label}
-      </Text>
+      {(hovered || isActive) && (
+        <Text
+            position={[0, size + 0.4, 0]}
+            fontSize={0.25}
+            color="white"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.02}
+            outlineColor="#000000"
+        >
+            {node.label}
+        </Text>
+      )}
     </group>
   );
 }
 
 function Connection({ start, end }: { start: [number, number, number]; end: [number, number, number] }) {
-  const ref = useRef<THREE.Line>(null);
-  
   const points = useMemo(() => [new THREE.Vector3(...start), new THREE.Vector3(...end)], [start, end]);
   const lineGeometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
 
   return (
     <line geometry={lineGeometry}>
-      <lineBasicMaterial attach="material" color="rgba(255,255,255,0.2)" transparent opacity={0.3} />
+      <lineBasicMaterial attach="material" color="#4f46e5" transparent opacity={0.1} />
     </line>
   );
 }
 
 function Scene({ onSelectNode }: { onSelectNode: (node: MemoryNode) => void }) {
+  const [nodes, setNodes] = useState<MemoryNode[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleNodeClick = (id: string) => {
-    setActiveId(id);
-    const node = INITIAL_NODES.find(n => n.id === id);
-    if (node) onSelectNode(node);
+  useEffect(() => {
+    const fetchNodes = async () => {
+        try {
+            const res = await api.get('/api/rag/nodes');
+            const data = res.data;
+            const mappedNodes = data.map((n: any, i: number) => ({
+                id: n.id,
+                label: n.document?.fileName || "Untitled Chunk",
+                type: n.qualityScore > 1.2 ? 'core' : 'fact',
+                // Distribute in a spiral/sphere
+                position: [
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15
+                ],
+                connections: [],
+                qualityScore: n.qualityScore,
+                accessCount: n.accessCount
+            }));
+            setNodes(mappedNodes);
+        } catch (err) {
+            console.error("Failed to fetch knowledge nodes", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchNodes();
+  }, []);
+
+  const handleNodeClick = (node: MemoryNode) => {
+    setActiveId(node.id);
+    onSelectNode(node);
   };
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
+      <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.5} />
       
-      {INITIAL_NODES.map(node => (
+      {nodes.map(node => (
         <Node 
             key={node.id} 
             node={node} 
@@ -115,33 +141,27 @@ function Scene({ onSelectNode }: { onSelectNode: (node: MemoryNode) => void }) {
         />
       ))}
 
-      {INITIAL_NODES.map(node => 
-        node.connections.map(targetId => {
-          const target = INITIAL_NODES.find(n => n.id === targetId);
-          if (!target || node.id === target.id) return null; // Avoid self or missing
-          // Draw connection only once (e.g., if id < targetId string compare) to avoid double lines? 
-          // For now, simpler to just draw all connection definitions.
-          return (
-            <Connection 
-                key={`${node.id}-${target.id}`} 
-                start={node.position} 
-                end={target.position} 
-            />
-          );
-        })
-      )}
+      {/* Basic random connections for visual effect */}
+      {nodes.slice(0, 15).map((node, i) => {
+          const nextNode = nodes[i + 1];
+          if (!nextNode) return null;
+          return <Connection key={i} start={node.position} end={nextNode.position} />;
+      })}
       
-      <OrbitControls autoRotate autoRotateSpeed={0.5} enablePan={true} enableZoom={true} />
+      <OrbitControls autoRotate autoRotateSpeed={0.2} enablePan={true} enableZoom={true} />
     </>
   );
 }
 
 export function MemoryGalaxy({ onSelectNode }: { onSelectNode: (node: any) => void }) {
   return (
-    <div className="w-full h-full bg-black">
-      <Canvas camera={{ position: [0, 0, 10], fov: 60 }}>
+    <div className="w-full h-full bg-slate-950">
+      <Canvas camera={{ position: [0, 0, 15], fov: 60 }}>
         <Scene onSelectNode={onSelectNode} />
       </Canvas>
+      <div className="absolute bottom-4 right-4 text-[10px] text-white/20 uppercase tracking-[0.2em] font-mono">
+        ArtorIA Neural Map v2.0
+      </div>
     </div>
   );
 }

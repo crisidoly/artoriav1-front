@@ -14,6 +14,7 @@ import {
     LayoutDashboard,
     Link2,
     Mail,
+    Mic,
     Network,
     Settings,
     Shield,
@@ -43,6 +44,8 @@ export const GOOGLE_ITEMS = [
 ];
 
 export const AI_WORKFLOW_ITEMS = [
+  { label: "Base de Conhecimento", href: "/knowledge", icon: Database },
+  { label: "ElevenLabs Voice", href: "/elevenlabs", icon: Mic },
   { label: "Workflow Live", href: "/workflows", icon: Bot },
   { label: "Histórico", href: "/history", icon: BarChart3 },
 ];

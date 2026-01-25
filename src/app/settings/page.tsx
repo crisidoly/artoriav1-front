@@ -2,6 +2,7 @@
 
 import { MemoryExplorer } from "@/components/settings/MemoryExplorer";
 import { ModelPlayground } from "@/components/settings/ModelPlayground";
+import { TechStackConfig } from "@/components/settings/TechStackConfig";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Cpu, Database, Fingerprint } from "lucide-react";
 
@@ -32,7 +33,17 @@ export default function SettingsPage() {
                     <Fingerprint className="h-4 w-4 mr-2" />
                     Personality & Voice
                 </TabsTrigger>
+                <TabsTrigger value="context" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400">
+                    <Brain className="h-4 w-4 mr-2" />
+                    Personal Context
+                </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="context" className="flex-1 mt-0">
+                <div className="h-full glass-card p-6">
+                    <TechStackConfig />
+                </div>
+            </TabsContent>
 
             <TabsContent value="models" className="flex-1 mt-0">
                 <div className="h-full glass-card p-6">

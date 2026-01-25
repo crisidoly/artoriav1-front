@@ -1,0 +1,11 @@
+{
+  "projectName": "OpusFocus",
+  "objective": "Criar um gerenciador de tarefas ultra-simples para focar no trabalho.",
+  "techStack": {
+    "database": "Prisma (PostgreSQL/SQLite)",
+    "frontend": "HTML, JavaScript, Tailwind CSS, Lucide React",
+    "backend": "N/A (local storage para simplicidade no sandbox)"
+  },
+  "fileStructure": "/sandbox/OpusFocus",
+  "status": "initial_generation_complete"
+}

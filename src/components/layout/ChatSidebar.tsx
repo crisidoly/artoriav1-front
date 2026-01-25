@@ -8,23 +8,26 @@ import { useVoiceRecording } from "@/hooks/use-voice-recording";
 import { cn } from "@/lib/utils";
 import { ChatMessage, useChatStore } from "@/store/chat";
 import {
-  Brain,
-  Code2,
-  Eye,
-  FileText,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Loader2,
-  Mail,
-  Mic,
-  MoreVertical,
-  Paperclip,
-  Play,
-  Plus,
-  Send,
-  TableProperties,
-  Volume2,
-  X
+    Brain,
+    Code2,
+    Eye,
+    FileText,
+    Image as ImageIcon,
+    Link as LinkIcon,
+    Loader2,
+    Mail,
+    Mic,
+    MoreVertical,
+    Paperclip,
+    Play,
+    Plus,
+    Send,
+    Sparkles,
+    TableProperties,
+    ThumbsDown,
+    ThumbsUp,
+    Volume2,
+    X
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,6 +38,72 @@ import { MeliAuthCard } from "../meli/MeliAuthCard";
 import { MeliDataCard } from "../meli/MeliDataCard";
 
 
+
+// === RAG SOURCES COMPONENT ===
+function RAGSources({ sources }: { sources: Array<{ id: string; content: string; title?: string; similarity?: number }> }) {
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
+
+  const handleFeedback = async (chunkId: string, feedback: 'POSITIVE' | 'NEGATIVE') => {
+    try {
+      await api.post('/api/tools/execute', {
+        toolName: 'feedbackChunk',
+        parameters: { chunkId, feedback }
+      });
+      setFeedbackGiven(prev => ({ ...prev, [chunkId]: feedback === 'POSITIVE' ? 'up' : 'down' }));
+      toast.success(feedback === 'POSITIVE' ? "Feedback positivo enviado!" : "Feedback negativo enviado.");
+    } catch (error) {
+      toast.error("Falha ao enviar feedback");
+    }
+  };
+
+  return (
+    <div className="mt-4 space-y-2 border-t border-white/5 pt-4">
+      <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-2">
+        <Sparkles className="h-3 w-3 text-primary-glow" /> Fontes de Conhecimento
+      </div>
+      <div className="flex flex-col gap-2">
+        {sources.map((src, i) => (
+          <div key={i} className="bg-black/20 rounded-lg p-2 border border-white/5 group/source relative transition-all hover:border-primary/30">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-bold text-primary/80 truncate max-w-[150px]">
+                📚 {src.title || `Fonte ${i + 1}`}
+              </span>
+              <div className="flex items-center gap-1 opacity-0 group-hover/source:opacity-100 transition-opacity">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className={cn(
+                    "h-6 w-6 rounded-md transition-all",
+                    feedbackGiven[src.id] === 'up' ? "text-green-400 bg-green-400/10" : "hover:text-green-400 hover:bg-green-400/10"
+                  )}
+                  onClick={() => handleFeedback(src.id, 'POSITIVE')}
+                  disabled={!!feedbackGiven[src.id]}
+                >
+                  <ThumbsUp className="h-3 w-3" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className={cn(
+                    "h-6 w-6 rounded-md transition-all",
+                    feedbackGiven[src.id] === 'down' ? "text-red-400 bg-red-400/10" : "hover:text-red-400 hover:bg-red-400/10"
+                  )}
+                  onClick={() => handleFeedback(src.id, 'NEGATIVE')}
+                  disabled={!!feedbackGiven[src.id]}
+                >
+                  <ThumbsDown className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground line-clamp-2 italic">
+              "{src.content.substring(0, 100)}..."
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // === LINK STYLING HELPER ===
 const getLinkStyle = (type: string) => {
@@ -409,6 +478,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
       >
         {message.content}
       </ReactMarkdown>
+      {message.metadata?.sources && <RAGSources sources={message.metadata.sources} />}
     </div>
   );
 }
@@ -575,10 +645,13 @@ export function ChatSidebar() {
                   <MessageContent message={msg} />
                   
                   {/* Timestamp */}
-                  <div className={cn(
-                    "text-[9px] text-muted-foreground/50 mt-2",
-                    msg.type === 'chart' || msg.type === 'image' ? "px-1" : ""
-                  )}>
+                  <div 
+                    suppressHydrationWarning={true}
+                    className={cn(
+                      "text-[9px] text-muted-foreground/50 mt-2",
+                      msg.type === 'chart' || msg.type === 'image' ? "px-1" : ""
+                    )}
+                  >
                     {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>

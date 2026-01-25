@@ -18,6 +18,7 @@ export interface ChatMessage {
     toolName?: string;
     toolArgs?: any;
     provider?: string;
+    sources?: Array<{ id: string; content: string; title?: string; similarity?: number }>;
     artifactData?: {
       type: string;
       title: string;
@@ -100,18 +101,13 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
     });
   }
 
-
-  // 3. Check for ARTIFACTS (Canvas Mode)
-  const artifact = extractArtifact(reply || "");
-  let cleanReply = reply || "";
-
-  // 3.1 Check for MeLi Auth
+  // 3. Check for special tool results (MeLi, etc)
   if (metadata?.action === 'reconnect_meli') {
     messages.push({
       id: uuidv4(),
       role: 'assistant',
-      content: '', // No text content needed
-      type: 'artifact', // Reusing artifact type for custom rendering, or we could add specific type if sidebar supports it
+      content: '',
+      type: 'artifact',
       timestamp: new Date(),
       metadata: {
         artifactData: {
@@ -124,7 +120,6 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
     });
   }
 
-  // 3.2 Check for MeLi Data (Inventory/Questions/Sales)
   if (metadata?.toolName && ['get_meli_inventory', 'manage_meli_questions', 'monitor_meli_sales'].includes(metadata.toolName) && metadata.toolResult?.data) {
      let meliType = '';
      if (metadata.toolName === 'get_meli_inventory') meliType = 'inventory';
@@ -143,15 +138,29 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
                     type: `meli-${meliType}`,
                     title: `Dados Mercado Livre`,
                     file: meliType,
-                    code: JSON.stringify(metadata.toolResult.data) // Passing data via code field for now
+                    code: JSON.stringify(metadata.toolResult.data)
                 }
             }
         });
      }
   }
 
+  // 3.3 Check for RAG Sources
+  let sources: any[] = [];
+  if (metadata?.toolName === 'queryKnowledge' && metadata.toolResult?.data) {
+     sources = metadata.toolResult.data.map((src: any) => ({
+        id: src.id,
+        content: src.content,
+        title: src.fileName || src.title,
+        similarity: src.similarity
+     }));
+  } else if (metadata?.sources) {
+     sources = metadata.sources;
+  }
+
+  // 4. Artifact Handling
+  const artifact = extractArtifact(reply || "");
   if (artifact) {
-    // Split text around artifact
     const parts = reply.split(artifact.fullMatch);
     const textBefore = parts[0]?.trim();
     const textAfter = parts[1]?.trim();
@@ -163,7 +172,7 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
         content: textBefore,
         type: 'message',
         timestamp: new Date(),
-        metadata: { provider: metadata?.provider }
+        metadata: { provider: metadata?.provider, sources }
       });
     }
 
@@ -198,9 +207,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
     return messages;
   }
   
-  // 4. Main text response (Regular)
+  // 5. Regular Message
   if (reply) {
-    // Extract links from response
     const links: any[] = [];
     const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
     let match;
@@ -221,7 +229,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
       timestamp: new Date(),
       metadata: {
         links: links.length > 0 ? links : undefined,
-        provider: metadata?.provider
+        provider: metadata?.provider,
+        sources: sources.length > 0 ? sources : undefined
       }
     });
   }
@@ -247,25 +256,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   sendMessage: async (content: string) => {
     const state = get();
+    const userMsg: ChatMessage = { id: uuidv4(), role: 'user', content, type: 'message', timestamp: new Date() };
+    const newHistory: ConversationHistory[] = [...state.history, { role: 'user', parts: [{ text: content }] }];
     
-    const userMsg: ChatMessage = {
-      id: uuidv4(),
-      role: 'user',
-      content,
-      type: 'message',
-      timestamp: new Date(),
-    };
-    
-    const newHistory: ConversationHistory[] = [
-      ...state.history,
-      { role: 'user', parts: [{ text: content }] }
-    ];
-    
-    set({ 
-      messages: [...state.messages, userMsg],
-      history: newHistory,
-      isTyping: true 
-    });
+    set({ messages: [...state.messages, userMsg], history: newHistory, isTyping: true });
 
     try {
       const response = await api.post('/api/chat', {
@@ -278,7 +272,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
       
       const data = response.data;
-      
       const aiMessages = parseAIResponse(data.reply, {
         provider: data.provider,
         imageUrl: data.toolResult?.imageUrl,
@@ -286,10 +279,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ...data.metadata
       });
       
-      const updatedHistory: ConversationHistory[] = [
-        ...newHistory,
-        { role: 'model', parts: [{ text: data.reply || '' }] }
-      ];
+      const updatedHistory: ConversationHistory[] = [...newHistory, { role: 'model', parts: [{ text: data.reply || '' }] }];
       
       set(s => {
         const newState: Partial<ChatState> = {
@@ -298,27 +288,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           isTyping: false,
           conversationId: data.conversationId || s.conversationId
         };
-
-        // If an artifact message was just added, auto-activate it
         const lastMsg = aiMessages.find(m => m.type === 'artifact');
-        if (lastMsg) {
-          newState.activeArtifact = lastMsg;
-        }
-
+        if (lastMsg) newState.activeArtifact = lastMsg;
         return newState;
       });
-      
     } catch (error: any) {
-      console.error('[CHAT] Error sending message:', error);
-      
       set(s => ({ 
-        messages: [...s.messages, {
-          id: uuidv4(),
-          role: 'assistant',
-          content: `❌ Erro ao processar mensagem: ${error.response?.data?.message || error.message || 'Erro desconhecido'}`,
-          type: 'message',
-          timestamp: new Date(),
-        }],
+        messages: [...s.messages, { id: uuidv4(), role: 'assistant', content: `❌ Erro: ${error.message}`, type: 'message', timestamp: new Date() }],
         isTyping: false 
       }));
     }
@@ -327,66 +303,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendAudioMessage: async (audioBlob: Blob) => {
     const state = get();
     set({ isTyping: true });
-    
     try {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('history', JSON.stringify(state.history));
-      if (state.conversationId) {
-        formData.append('conversationId', state.conversationId);
-      }
+      if (state.conversationId) formData.append('conversationId', state.conversationId);
       
-      const response = await api.post('/api/audio/chat', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
+      const response = await api.post('/api/audio/chat', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const data = response.data;
       
       if (data.transcript) {
-        set(s => ({ 
-          messages: [...s.messages, {
-            id: uuidv4(),
-            role: 'user',
-            content: `🎤 ${data.transcript}`,
-            type: 'message',
-            timestamp: new Date(),
-          }] 
-        }));
+        set(s => ({ messages: [...s.messages, { id: uuidv4(), role: 'user', content: `🎤 ${data.transcript}`, type: 'message', timestamp: new Date() }] }));
       }
       
       if (data.chatResponse?.reply) {
-        const aiMessages = parseAIResponse(data.chatResponse.reply, {
-          provider: data.chatResponse.provider,
-          ...data.chatResponse.metadata
-        });
-        
+        const aiMessages = parseAIResponse(data.chatResponse.reply, { provider: data.chatResponse.provider, ...data.chatResponse.metadata });
         set(s => {
-          const newState: Partial<ChatState> = {
-            messages: [...s.messages, ...aiMessages],
-            isTyping: false 
-          };
-          
+          const newState: Partial<ChatState> = { messages: [...s.messages, ...aiMessages], isTyping: false };
           const lastMsg = aiMessages.find(m => m.type === 'artifact');
-          if (lastMsg) {
-            newState.activeArtifact = lastMsg;
-          }
-          
+          if (lastMsg) newState.activeArtifact = lastMsg;
           return newState;
         });
       }
-      
     } catch (error: any) {
-      console.error('[CHAT] Error sending audio:', error);
-      set(s => ({ 
-        messages: [...s.messages, {
-          id: uuidv4(),
-          role: 'assistant',
-          content: `❌ Erro no áudio: ${error.response?.data?.message || error.message}`,
-          type: 'message',
-          timestamp: new Date(),
-        }],
-        isTyping: false 
-      }));
+      set(s => ({ messages: [...s.messages, { id: uuidv4(), role: 'assistant', content: `❌ Erro: ${error.message}`, type: 'message', timestamp: new Date() }], isTyping: false }));
     }
   },
 
