@@ -173,10 +173,10 @@ export default function ToolsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+      <div className="flex-1 p-8 overflow-hidden flex flex-col space-y-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-1">
             <span className="text-primary-glow">Ferramentas</span> Disponíveis
           </h1>
           <p className="text-muted-foreground">
@@ -258,7 +258,7 @@ export default function ToolsPage() {
           {/* Detail Panel */}
           <div className="w-80 hidden xl:block">
             {selectedTool ? (
-              <Card className="h-full border-primary/20 bg-card/80">
+              <Card className="h-full border-white/5 bg-card/40">
                 <CardHeader>
                   <div className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center mb-3",

@@ -6,9 +6,9 @@ import { AlertCircle } from "lucide-react";
 
 export default function GmailPage() {
   return (
-    <div className="h-full p-8 flex flex-col gap-6">
+    <div className="h-full p-8 flex flex-col gap-8">
         <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Google Workspace Link</h1>
+            <h1 className="text-3xl font-bold text-white mb-1"><span className="text-primary-glow">Smart</span> Mail</h1>
             <p className="text-muted-foreground">Secure connection to your Gmail account established.</p>
         </div>
 
@@ -20,7 +20,7 @@ export default function GmailPage() {
             </AlertDescription>
         </Alert>
 
-        <div className="flex-1 glass-card p-6 min-h-[500px]">
+        <div className="flex-1 bg-card/40 border border-white/5 rounded-xl p-6 min-h-[500px]">
             <SmartInbox />
         </div>
     </div>

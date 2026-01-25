@@ -26,6 +26,9 @@ interface AuthState {
   logout: () => void;
   checkAuth: () => Promise<void>;
   connectIntegration: (provider: string) => Promise<void>;
+  loginWithProvider: (provider: string) => void;
+  loginWithEmail: (email: string, password: string) => Promise<boolean>;
+  registerWithEmail: (name: string, email: string, password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -66,8 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Redirect to login if not public
         // For now, we might not have a login page, so we keep it loose 
         // OR define a login entry point.
-        // console.warn("User not authenticated, redirecting...");
-        // router.push("/login");
+        console.warn("User not authenticated, redirecting...");
+        router.push("/login");
     }
   }, [isLoading, isAuthenticated, pathname, router]);
 
@@ -127,6 +130,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
   };
 
+  const loginWithEmail = async (email: string, password: string): Promise<boolean> => {
+      try {
+          const res = await api.post("/api/auth/login", { email, password });
+          if (res.data.success && res.data.token) {
+              localStorage.setItem('artoria_token', res.data.token);
+              await refetch();
+              return true;
+          }
+          return false;
+      } catch (e) {
+          console.error("Login failed", e);
+          throw e;
+      }
+  };
+
+  const registerWithEmail = async (name: string, email: string, password: string): Promise<boolean> => {
+      try {
+          const res = await api.post("/api/auth/register", { name, email, password });
+          if (res.data.success) {
+              // Auto login after register? Or redirect to login?
+              // Let's return true and let UI decide
+              return true;
+          }
+          return false;
+      } catch (e) {
+          console.error("Registration failed", e);
+          throw e;
+      }
+  };
+
+
   const logout = async () => {
     try {
       await api.post("/api/auth/logout");
@@ -145,15 +179,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated,
         login,
+        loginWithProvider: (provider: string) => {
+            window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/${provider}`;
+        },
         logout,
         checkAuth: async () => { await refetch(); },
         connectIntegration,
+        loginWithEmail,
+        registerWithEmail
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
+
+// Re-defining connectIntegration is not what I want. 
+// I need to fix the duplicate checkAuth in interface first.
 
 export function useAuth() {
   const context = useContext(AuthContext);

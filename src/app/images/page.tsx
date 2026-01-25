@@ -103,10 +103,10 @@ export default function ImagesPage() {
   return (
     <div className="flex h-full">
       {/* Main Content */}
-      <div className="flex-1 p-6 flex flex-col">
+      <div className="flex-1 p-8 flex flex-col space-y-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-1">
             <span className="text-primary-glow">Gerador</span> de Imagens
           </h1>
           <p className="text-muted-foreground">
@@ -115,7 +115,7 @@ export default function ImagesPage() {
         </div>
 
         {/* Input Area */}
-        <Card className="border-primary/20 bg-card/80 mb-6">
+        <Card className="border-white/5 bg-card/40 mb-6">
           <CardContent className="p-4 space-y-4">
             <div className="relative">
               <Textarea

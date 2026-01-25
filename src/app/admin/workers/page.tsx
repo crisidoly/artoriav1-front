@@ -131,12 +131,12 @@ export default function WorkersPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-      <div className="container mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="h-full overflow-y-auto p-8 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+      <div className="container mx-auto space-y-8 animate-in fade-in duration-500">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-              Workers & Filas
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              <span className="text-primary-glow">Workers</span> & Filas
             </h1>
           <p className="text-muted-foreground mt-1">
             Gerenciamento em tempo real dos processos em segundo plano.

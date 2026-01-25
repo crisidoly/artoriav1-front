@@ -7,10 +7,12 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  traceUrl?: string; // 🔗 Telemetry Link
 }
 
 interface AIChatSidebarProps {
@@ -80,11 +82,13 @@ export function AIChatSidebar({
       });
 
       const aiReply = response.data.reply || "Desculpe, não consegui processar sua solicitação.";
+      const traceUrl = response.data.metadata?.traceUrl; // 🔗 Capture Trace URL
 
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: aiReply
+        content: aiReply,
+        traceUrl: traceUrl
       }]);
 
       // Check if tools were executed
@@ -201,7 +205,19 @@ export function AIChatSidebar({
             )}>
               {renderMessageContent(msg.content)}
               {msg.role === 'assistant' && !msg.content.includes('[SANDBOX_PROJECT') && (
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-2 gap-2">
+                   {/* 🔗 LangSmith Debug Link */}
+                   {msg.traceUrl && (
+                    <a
+                      href={msg.traceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] flex items-center gap-1 text-white/20 hover:text-purple-400 transition-colors uppercase font-bold tracking-wider"
+                      title="Open LangSmith Trace"
+                    >
+                      🐛 DEBUG
+                    </a>
+                   )}
                   <button 
                     onClick={() => handleCopy(msg.content)}
                     className="text-xs flex items-center gap-1 text-white/30 hover:text-white/80 transition-colors"
@@ -213,6 +229,7 @@ export function AIChatSidebar({
             </div>
           </div>
         ))}
+
         {isTyping && (
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">

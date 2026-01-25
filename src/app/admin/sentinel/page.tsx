@@ -1,11 +1,13 @@
 "use client";
 
+import { SentinelMagicCreator } from '@/components/admin/SentinelMagicCreator';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/auth-context";
-import { Activity, AlertTriangle, CheckCircle2, Clock, Globe, Pause, Play, RefreshCw, Shield, Zap } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Clock, Globe, Pause, Play, Plus, RefreshCw, Zap } from 'lucide-react';
 import { useEffect, useState } from "react";
 
 interface Monitor {
@@ -36,13 +38,14 @@ export default function SentinelDashboard() {
     const [status, setStatus] = useState<{ active: boolean; enabledEnv: boolean } | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     const fetchData = async () => {
         try {
             const [monRes, flowsRes, statusRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sentinel/monitors`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sentinel/flows`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sentinel/status`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sentinel/monitors`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sentinel/flows`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sentinel/status`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
             ]);
 
             if (monRes.ok) {
@@ -74,7 +77,7 @@ export default function SentinelDashboard() {
     const toggleSentinel = async () => {
         if (!status) return;
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sentinel/toggle`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sentinel/toggle`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -109,19 +112,90 @@ export default function SentinelDashboard() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6 h-full flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between space-y-2">
+        <div className="flex-1 space-y-8 p-8 pt-6 h-full flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between">
                 <div>
-                     <h2 className="text-3xl font-bold tracking-tight text-primary-glow flex items-center gap-3">
-                        <Shield className="h-8 w-8" />
-                        Sentinel Eye
-                        {status?.active && <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>}
-                    </h2>
-                    <p className="text-muted-foreground">
+                     <h1 className="text-3xl font-bold tracking-tight text-white">
+                        <span className="text-primary-glow">Sentinel</span> Eye 🛡️
+                     </h1>
+                     <p className="text-muted-foreground mt-1">
                         Background monitoring and automated security oversight.
-                    </p>
+                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex gap-2 items-center">
+                    <SentinelMagicCreator onMonitorCreated={fetchData} />
+                    
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="gap-2" variant="outline" size="sm">
+                                <Plus className="h-4 w-4" />
+                                Novo Monitor
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Criar Monitor Manualmente</DialogTitle>
+                                <DialogDescription>Configure um monitoramento específico via URL ou API.</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const data = {
+                                    title: formData.get('title'),
+                                    target: formData.get('target'),
+                                    type: formData.get('type'),
+                                    condition: formData.get('condition'),
+                                    frequency: formData.get('frequency'),
+                                    actions: [] 
+                                };
+                                
+                                try {
+                                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sentinel/monitors`, {
+                                        method: 'POST',
+                                        headers: { 
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${localStorage.getItem('token')}` 
+                                        },
+                                        body: JSON.stringify(data)
+                                    });
+                                    setIsCreateOpen(false);
+                                    fetchData();
+                                } catch (err) {
+                                    console.error(err);
+                                }
+                            }} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Título</label>
+                                    <input name="title" required className="w-full p-2 rounded-md border bg-transparent" placeholder="Ex: Status Google" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Target (URL)</label>
+                                    <input name="target" required className="w-full p-2 rounded-md border bg-transparent" placeholder="https://..." />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Tipo</label>
+                                        <select name="type" className="w-full p-2 rounded-md border bg-transparent text-foreground">
+                                            <option value="api_poll">API Poll (Status)</option>
+                                            <option value="ai_watch">HTML (AI Analysis)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Frequência (min)</label>
+                                        <input name="frequency" type="number" defaultValue="5" min="1" className="w-full p-2 rounded-md border bg-transparent" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Condição</label>
+                                    <input name="condition" required className="w-full p-2 rounded-md border bg-transparent" placeholder="Ex: != 200" />
+                                </div>
+                                <Button type="submit" className="w-full">Criar Monitor</Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <div className="h-4 w-px bg-white/10 mx-2" />
+
                     <Button variant="outline" size="sm" onClick={() => { setRefreshing(true); fetchData(); }} disabled={refreshing}>
                         <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
@@ -132,7 +206,7 @@ export default function SentinelDashboard() {
                         onClick={toggleSentinel}
                     >
                         {status?.active ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                        {status?.active ? "Pause Sentinel" : "Resume Sentinel"}
+                        {status?.active ? "Pause" : "Resume"}
                     </Button>
                 </div>
             </div>
@@ -145,7 +219,7 @@ export default function SentinelDashboard() {
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-primary/5 border-primary/20">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Monitors</CardTitle>
                         <Activity className="h-4 w-4 text-primary" />
@@ -157,7 +231,7 @@ export default function SentinelDashboard() {
                         </p>
                     </CardContent>
                 </Card>
-                <Card className="bg-blue-500/5 border-blue-500/20">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Scheduled Flows</CardTitle>
                         <Zap className="h-4 w-4 text-blue-500" />

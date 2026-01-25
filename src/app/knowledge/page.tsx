@@ -239,19 +239,19 @@ export default function KnowledgePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="flex-1 space-y-8 p-8 min-h-full">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600">
-              <Brain className="h-8 w-8" />
+            <div className="p-3 rounded-xl bg-primary/10">
+              <Brain className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
-                Knowledge Base
+              <h1 className="text-3xl font-bold text-white">
+                <span className="text-primary-glow">Knowledge</span> Base
               </h1>
-              <p className="text-slate-400">Ensine a ArtorIA com documentações e conhecimento</p>
+              <p className="text-muted-foreground mt-1">Ensine a ArtorIA com documentações e conhecimento</p>
             </div>
           </div>
           
@@ -265,25 +265,25 @@ export default function KnowledgePage() {
             />
             <Button 
               variant="outline"
-              className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+              className="gap-2"
               onClick={() => document.getElementById('file-upload')?.click()}
             >
-              <Upload className="h-4 w-4 mr-2" />
+              <Upload className="h-4 w-4" />
               Upload Arquivo
             </Button>
             <Button 
               onClick={handleIngestUrl}
               variant="outline"
-              className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+              className="gap-2"
             >
-              <Globe className="h-4 w-4 mr-2" />
+              <Globe className="h-4 w-4" />
               Ingerir URL
             </Button>
             <Button 
               onClick={() => setShowUploadForm(!showUploadForm)}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500"
+              className="gap-2"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Adicionar Conhecimento
             </Button>
           </div>
@@ -292,41 +292,41 @@ export default function KnowledgePage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card/40 border-white/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2 text-purple-400">
-                  <FileText className="h-5 w-5" />
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
                   Documentos
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{stats.totalDocs}</p>
+                <p className="text-2xl font-bold text-white">{stats.totalDocs}</p>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card/40 border-white/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2 text-indigo-400">
-                  <Database className="h-5 w-5" />
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Database className="h-4 w-4 text-primary" />
                   Chunks (Fragmentos)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{stats.totalChunks}</p>
+                <p className="text-2xl font-bold text-white">{stats.totalChunks}</p>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card/40 border-white/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2 text-green-400">
-                  <Zap className="h-5 w-5" />
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-green-400" />
                   Saúde do Cérebro
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-3xl font-bold">{(stats.avgQuality * 100).toFixed(0)}%</p>
+                    <p className="text-2xl font-bold text-white">{(stats.avgQuality * 100).toFixed(0)}%</p>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Qualidade Média</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden flex">
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex">
                     <div className="bg-red-500 h-full transition-all" title="Baixa Qualidade" style={{ width: `${((stats.qualityDistribution?.low || 0) / (stats.totalChunks || 1)) * 100}%` }} />
                     <div className="bg-yellow-500 h-full transition-all" title="Média Qualidade" style={{ width: `${((stats.qualityDistribution?.medium || 0) / (stats.totalChunks || 1)) * 100}%` }} />
                     <div className="bg-indigo-500 h-full transition-all" title="Alta Qualidade" style={{ width: `${((stats.qualityDistribution?.high || 0) / (stats.totalChunks || 1)) * 100}%` }} />
@@ -338,10 +338,10 @@ export default function KnowledgePage() {
 
         {/* Upload Form */}
         {showUploadForm && (
-          <Card className="bg-slate-900/50 border-purple-500/30">
+          <Card className="bg-card/40 border-primary/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-purple-400" />
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-5 w-5 text-primary" />
                 Adicionar Documentação
               </CardTitle>
               <CardDescription>
@@ -351,30 +351,30 @@ export default function KnowledgePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">Título</label>
+                  <label className="text-sm text-muted-foreground mb-1 block">Título</label>
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Ex: React useEffect Hook"
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-black/20 border-white/10"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">Biblioteca/Tecnologia</label>
+                  <label className="text-sm text-muted-foreground mb-1 block">Biblioteca/Tecnologia</label>
                   <Input
                     value={formData.libraryName}
                     onChange={(e) => setFormData({ ...formData, libraryName: e.target.value })}
                     placeholder="Ex: React, TypeScript, Node.js"
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-black/20 border-white/10"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">Categoria</label>
+                  <label className="text-sm text-muted-foreground mb-1 block">Categoria</label>
                   <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                    <SelectTrigger className="bg-black/20 border-white/10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -385,23 +385,23 @@ export default function KnowledgePage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">URL Fonte (opcional)</label>
+                  <label className="text-sm text-muted-foreground mb-1 block">URL Fonte (opcional)</label>
                   <Input
                     value={formData.sourceUrl}
                     onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
                     placeholder="https://reactjs.org/docs/..."
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-black/20 border-white/10"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 mb-1 block">Conteúdo</label>
+                <label className="text-sm text-muted-foreground mb-1 block">Conteúdo</label>
                 <Textarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="Cole aqui o conteúdo da documentação, código de exemplo, ou qualquer texto técnico..."
-                  className="bg-slate-800 border-slate-700 min-h-[200px] font-mono text-sm"
+                  className="bg-black/20 border-white/10 min-h-[200px] font-mono text-sm"
                 />
               </div>
 
@@ -412,7 +412,6 @@ export default function KnowledgePage() {
                 <Button 
                   onClick={handleUpload} 
                   disabled={uploading}
-                  className="bg-purple-600 hover:bg-purple-500"
                 >
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                   Salvar no Cérebro
@@ -423,10 +422,10 @@ export default function KnowledgePage() {
         )}
 
         {/* Search */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card/40 border-white/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-indigo-400" />
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Search className="h-5 w-5 text-primary" />
               Buscar no Conhecimento
             </CardTitle>
           </CardHeader>
@@ -437,21 +436,21 @@ export default function KnowledgePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Pesquise algo... Ex: 'como usar useEffect?'"
-                className="bg-slate-800 border-slate-700"
+                className="bg-black/20 border-white/10"
               />
-              <Button onClick={handleSearch} disabled={searching} className="bg-indigo-600 hover:bg-indigo-500">
+              <Button onClick={handleSearch} disabled={searching}>
                 {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </Button>
             </div>
 
             {searchResults.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-sm text-slate-400">Encontrados {searchResults.length} resultados:</p>
+                <p className="text-sm text-muted-foreground">Encontrados {searchResults.length} resultados:</p>
                 {searchResults.map((result, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div key={i} className="p-3 rounded-lg bg-black/20 border border-white/5">
                     <p className="text-sm text-slate-300 line-clamp-3">{result.content?.substring(0, 300)}...</p>
                     {result.metadata?.library && (
-                      <span className="text-xs text-purple-400 mt-1 inline-block">📚 {result.metadata.library}</span>
+                      <span className="text-xs text-primary-glow mt-1 inline-block">📚 {result.metadata.library}</span>
                     )}
                   </div>
                 ))}
@@ -461,20 +460,20 @@ export default function KnowledgePage() {
         </Card>
 
         {/* Documents List */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card/40 border-white/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-purple-400" />
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BookOpen className="h-5 w-5 text-primary" />
               Documentos na Base
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : documents.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <Brain className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <p>Nenhum documento na base de conhecimento</p>
                 <p className="text-sm">Adicione documentações para a ArtorIA aprender!</p>
@@ -485,21 +484,21 @@ export default function KnowledgePage() {
                   {documents.map((doc) => (
                     <div 
                       key={doc.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-black/20 border border-white/5 hover:bg-white/5 transition-colors"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{doc.fileName}</span>
+                          <span className="font-medium text-white">{doc.fileName}</span>
                           <span className={cn(
                             "px-2 py-0.5 text-xs rounded-full",
-                            doc.status === 'processed' ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"
+                            doc.status === 'processed' ? "bg-green-500/10 text-green-400" : "bg-yellow-500/10 text-yellow-400"
                           )}>
                             {doc.status}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                           {doc.metadata?.library && (
-                            <span className="text-purple-400">📚 {doc.metadata.library}</span>
+                            <span className="text-primary-glow">📚 {doc.metadata.library}</span>
                           )}
                           <span>{doc.totalChunks} chunks</span>
                           <span>{new Date(doc.createdAt).toLocaleDateString('pt-BR')}</span>
@@ -509,7 +508,7 @@ export default function KnowledgePage() {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => handleDelete(doc.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

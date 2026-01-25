@@ -42,11 +42,11 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div className="p-8 space-y-8 h-full flex flex-col">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary-glow">Agenda</h1>
-          <p className="text-muted-foreground">Gerencie sua agenda e tarefas do agente.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1"><span className="text-primary-glow">Agenda</span> & Eventos</h1>
+          <p className="text-muted-foreground">Gerencie sua agenda e compromissos do agente.</p>
         </div>
         <div className="flex gap-3">
             <AIPlannerWidget />

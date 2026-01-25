@@ -36,10 +36,9 @@ api.interceptors.response.use(
     // but the AuthContext should handle the session state update.
     
     if (error.response?.status === 401) {
-       // Optional: Dispatch a global event or rely on AuthContext polling/swr
-       if (typeof window !== "undefined") {
-           // window.location.href = '/login'; // Or let the AuthGuard handle it
-       }
+       // Allow individual components to handle 401 (e.g., GitHub integration check)
+       // AuthContext will handle global session expiration via /api/auth/status check
+       console.warn("API 401 Unauthorized:", error.config?.url);
     }
     
     return Promise.reject(error);

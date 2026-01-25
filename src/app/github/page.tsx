@@ -146,7 +146,7 @@ export default function GithubPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                         <Github className="h-8 w-8 text-white" />
-                        DEVOPS CENTER
+                        <span className="text-primary-glow">DEVOPS</span> CENTER
                     </h1>
                     <p className="text-muted-foreground text-sm mt-1">
                         Active repositories and pipeline status.

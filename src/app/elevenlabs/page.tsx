@@ -62,22 +62,25 @@ export default function ElevenLabsPage() {
     };
 
     return (
-        <div className="container mx-auto p-6 space-y-6 animate-in fade-in py-10">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 rounded-full bg-primary/10 text-primary-glow">
+        <div className="flex-1 space-y-8 p-8 min-h-full">
+            {/* Header */}
+            <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary">
                     <Mic className="h-8 w-8" />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">ElevenLabs Voice Studio</h1>
-                    <p className="text-muted-foreground">Transforme texto em fala realista com IA.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-white">
+                        <span className="text-primary-glow">ElevenLabs</span> Voice Studio
+                    </h1>
+                    <p className="text-muted-foreground mt-1">Transforme texto em fala realista com IA.</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Voice Selection */}
-                <Card className="bg-[#18181b] border-white/10 col-span-1">
+                <Card className="bg-card/40 border-white/5 col-span-1">
                     <CardHeader>
-                        <CardTitle className="text-lg">Vozes Disponíveis</CardTitle>
+                        <CardTitle className="text-sm font-medium">Vozes Disponíveis</CardTitle>
                         <CardDescription>Escolha quem vai falar.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -97,9 +100,9 @@ export default function ElevenLabsPage() {
                 </Card>
 
                 {/* Input Area */}
-                <Card className="bg-[#18181b] border-white/10 col-span-1 lg:col-span-2">
+                <Card className="bg-card/40 border-white/5 col-span-1 lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="text-lg">Texto para Fala</CardTitle>
+                        <CardTitle className="text-sm font-medium">Texto para Fala</CardTitle>
                         <CardDescription>Digite o que você quer ouvir.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">

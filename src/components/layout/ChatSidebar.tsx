@@ -633,7 +633,7 @@ export function ChatSidebar() {
 
                 {/* Message Bubble */}
                 <div className={cn(
-                  "rounded-2xl text-sm shadow-sm max-w-[85%] overflow-hidden",
+                  "rounded-2xl text-sm shadow-sm max-w-[85%] overflow-hidden group relative",
                   msg.role === 'assistant' 
                     ? "bg-secondary/50 rounded-tl-sm border border-border/30" 
                     : "bg-primary/20 rounded-tr-sm border border-primary/20",
@@ -644,15 +644,28 @@ export function ChatSidebar() {
                 )}>
                   <MessageContent message={msg} />
                   
-                  {/* Timestamp */}
+                  {/* Timestamp & Debug */}
                   <div 
                     suppressHydrationWarning={true}
                     className={cn(
-                      "text-[9px] text-muted-foreground/50 mt-2",
+                      "flex items-center justify-between text-[9px] text-muted-foreground/50 mt-2",
                       msg.type === 'chart' || msg.type === 'image' ? "px-1" : ""
                     )}
                   >
-                    {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    <span suppressHydrationWarning>{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    
+                    {/* 🐛 Debug Link */}
+                    {msg.metadata?.traceUrl && (
+                        <a 
+                            href={msg.metadata.traceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity text-purple-400 hover:text-purple-300 font-bold uppercase tracking-wider flex items-center gap-1"
+                            title="Ver Trace LangSmith"
+                        >
+                            🐛 DEBUG
+                        </a>
+                    )}
                   </div>
                 </div>
               </div>

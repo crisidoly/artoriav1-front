@@ -49,12 +49,12 @@ export default function TasksPage() {
     }
 
     return (
-        <div className="flex h-full flex-col space-y-6 p-8">
+        <div className="flex h-full flex-col space-y-8 p-8">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-primary-glow">Quadro de Tarefas</h1>
-                    <p className="text-muted-foreground">Gerencie a fila e prioridades do seu agente.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-white"><span className="text-primary-glow">Quadro</span> de Tarefas</h1>
+                    <p className="text-muted-foreground mt-1">Gerencie a fila e prioridades do seu agente.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <AIPlannerWidget />

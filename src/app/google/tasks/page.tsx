@@ -34,21 +34,31 @@ export default function GoogleTasksPage() {
   const completedTasks = tasks?.filter((t: any) => t.status === 'done') || [];
 
   return (
-    <div className="flex h-full border border-white/5 rounded-xl bg-card/30 backdrop-blur-sm shadow-2xl overflow-hidden">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background/50">
+    <div className="p-8 space-y-8 min-h-full flex flex-col">
+       {/* Header */}
+       <div className="flex items-center justify-between shrink-0">
+          <div>
+              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
+                  <span className="text-primary-glow">Google</span> Tasks
+              </h1>
+              <p className="text-muted-foreground">Gerencie suas tarefas e pendências do Google.</p>
+          </div>
+       </div>
+
+       {/* Task Container */}
+       <div className="flex-1 flex flex-col border border-white/5 rounded-xl bg-card/40 backdrop-blur-sm shadow-2xl overflow-hidden min-h-0 bg-background/50">
         
-        {/* Header */}
+        {/* Internal Header */}
         <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 shrink-0">
             <div>
-                <h2 className="text-xl font-bold text-primary-glow">Google Tasks</h2>
+                <h2 className="text-sm font-bold text-primary-glow uppercase tracking-wider">Minhas Listas</h2>
                 <p className="text-xs text-muted-foreground">{pendingTasks.length} tarefas pendentes</p>
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <ArrowUpDown className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
             </div>

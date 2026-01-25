@@ -83,15 +83,17 @@ export default function AuditPage() {
     }, [page, filter, search]);
 
     return (
-        <div className="p-8 space-y-6 min-h-full">
+        <div className="p-8 space-y-8 min-h-full">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Log de Auditoria</h1>
+                <h1 className="text-3xl font-bold text-white mb-1">
+                    <span className="text-primary-glow">Log</span> de Auditoria
+                </h1>
                 <p className="text-muted-foreground">Monitoramento de execução, erros e curas do sistema</p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-white/5 border-white/10">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Health Score</CardTitle>
                         <Activity className="h-4 w-4 text-green-500" />
@@ -101,7 +103,7 @@ export default function AuditPage() {
                         <p className="text-xs text-muted-foreground">Estabilidade do sistema</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/5 border-white/10">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Curas do Medic</CardTitle>
                         <Stethoscope className="h-4 w-4 text-blue-400" />
@@ -111,7 +113,7 @@ export default function AuditPage() {
                         <p className="text-xs text-muted-foreground">Intervenções bem sucedidas</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/5 border-white/10">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Execuções</CardTitle>
                         <Terminal className="h-4 w-4 text-muted-foreground" />
@@ -120,7 +122,7 @@ export default function AuditPage() {
                         <div className="text-2xl font-bold">{stats?.totalExecutions || 0}</div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/5 border-white/10">
+                <Card className="bg-card/40 border-white/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Erros Recentes</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-500" />

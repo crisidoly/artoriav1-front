@@ -10,8 +10,21 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store/chat";
 import { MessageSquare } from "lucide-react";
 
+import { usePathname } from "next/navigation";
+
 export function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const { isSidebarOpen, setSidebarOpen } = useChatStore();
+
+  const pathname = usePathname();
+  const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/register');
+
+  if (isAuthPage) {
+     return (
+        <div className="w-full h-screen relative overflow-hidden">
+            {children}
+        </div>
+     );
+  }
 
   return (
     <div className="flex h-screen w-full relative z-10">

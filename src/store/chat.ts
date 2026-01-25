@@ -18,6 +18,7 @@ export interface ChatMessage {
     toolName?: string;
     toolArgs?: any;
     provider?: string;
+    traceUrl?: string; // 🔗 Telemetry Link
     sources?: Array<{ id: string; content: string; title?: string; similarity?: number }>;
     artifactData?: {
       type: string;
@@ -82,7 +83,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
       type: 'image',
       timestamp: new Date(),
       metadata: {
-        imageUrl: metadata.imageUrl || metadata.generatedImage
+        imageUrl: metadata.imageUrl || metadata.generatedImage,
+        traceUrl: metadata?.traceUrl
       }
     });
   }
@@ -96,7 +98,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
       type: 'chart',
       timestamp: new Date(),
       metadata: {
-        chartData: metadata.chartData
+        chartData: metadata.chartData,
+        traceUrl: metadata?.traceUrl
       }
     });
   }
@@ -115,7 +118,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
             title: 'Mercado Livre Auth',
             file: 'auth',
             code: ''
-        }
+        },
+        traceUrl: metadata?.traceUrl
       }
     });
   }
@@ -139,7 +143,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
                     title: `Dados Mercado Livre`,
                     file: meliType,
                     code: JSON.stringify(metadata.toolResult.data)
-                }
+                },
+                traceUrl: metadata?.traceUrl
             }
         });
      }
@@ -172,7 +177,11 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
         content: textBefore,
         type: 'message',
         timestamp: new Date(),
-        metadata: { provider: metadata?.provider, sources }
+        metadata: { 
+            provider: metadata?.provider, 
+            sources,
+            traceUrl: metadata?.traceUrl
+        }
       });
     }
 
@@ -189,7 +198,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
           file: artifact.file,
           code: artifact.code
         },
-        provider: metadata?.provider
+        provider: metadata?.provider,
+        traceUrl: metadata?.traceUrl
       }
     });
 
@@ -200,7 +210,10 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
         content: textAfter,
         type: 'message',
         timestamp: new Date(),
-        metadata: { provider: metadata?.provider }
+        metadata: { 
+            provider: metadata?.provider,
+            traceUrl: metadata?.traceUrl
+        }
       });
     }
 
@@ -230,7 +243,8 @@ function parseAIResponse(reply: string, metadata?: any): ChatMessage[] {
       metadata: {
         links: links.length > 0 ? links : undefined,
         provider: metadata?.provider,
-        sources: sources.length > 0 ? sources : undefined
+        sources: sources.length > 0 ? sources : undefined,
+        traceUrl: metadata?.traceUrl
       }
     });
   }

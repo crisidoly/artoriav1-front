@@ -25,7 +25,7 @@ export default function ControlCenter() {
   };
 
   return (
-    <div className="relative min-h-full p-6 text-white overflow-hidden flex flex-col gap-6">
+    <div className="relative min-h-full p-8 text-white overflow-hidden flex flex-col gap-8">
       <Starfield resonance={safetyLevel === 'critical'} />
 
       {/* HEADER: DEFCON STATUS */}
@@ -33,7 +33,7 @@ export default function ControlCenter() {
           <div>
               <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
                   <ShieldAlert className="h-8 w-8 text-primary" />
-                  SENTINEL MISSION CONTROL
+                  <span className="text-primary-glow">SENTINEL</span> MISSION CONTROL
               </h1>
               <p className="text-muted-foreground font-mono text-xs mt-1">
                   SYSTEM_ID: ARTORIA_CORE_V3 // UPTIME: 99.99%
