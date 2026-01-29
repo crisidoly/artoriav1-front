@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef } from 'react';
 
 const Starfield: React.FC<{ resonance?: boolean }> = ({ resonance }) => {

@@ -2,32 +2,32 @@
 
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import {
-    Bot,
-    ChevronDown,
-    ChevronRight,
-    Code2,
-    Globe,
-    LogOut,
-    Shield,
-    Terminal,
-    Wrench
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  Code2,
+  Globe,
+  LogOut,
+  Shield,
+  Terminal,
+  Wrench
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -80,7 +80,7 @@ function NavGroup({
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200",
                   isActive
-                    ? "text-primary-glow bg-primary/10"
+                    ? "text-primary-glow bg-gradient-to-r from-primary/20 via-primary/5 to-transparent"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                 )}
               >
@@ -119,7 +119,7 @@ function NavItem({
         "flex items-center gap-3 py-2 rounded-md text-sm font-medium transition-colors relative group",
         isCollapsed ? "justify-center px-2" : "px-3",
         isActive
-          ? "text-primary-glow bg-primary/10"
+          ? "text-primary-glow bg-gradient-to-r from-primary/20 via-primary/5 to-transparent"
           : "text-muted-foreground hover:text-white hover:bg-white/5"
       )}
     >
@@ -133,11 +133,11 @@ function NavItem({
 }
 
 import {
-    AI_WORKFLOW_ITEMS,
-    DEV_GIT_ITEMS,
-    GOOGLE_ITEMS,
-    MAIN_ITEMS,
-    SETTINGS_ITEMS
+  AI_WORKFLOW_ITEMS,
+  DEV_GIT_ITEMS,
+  GOOGLE_ITEMS,
+  MAIN_ITEMS,
+  SETTINGS_ITEMS
 } from "@/config/nav";
 
 // === MOCK NOTIFICATIONS (Keep here for now or move to store/config if needed) ===
@@ -187,7 +187,7 @@ export function AppSidebar() {
           
           {/* Global Ambient Glow (Bleeds into page) */}
           <div className={cn(
-             "fixed top-0 left-0 w-[800px] h-[800px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none transition-opacity duration-1000 -translate-x-1/2 -translate-y-1/2 z-0",
+             "fixed top-0 left-0 w-[1200px] h-[1200px] bg-purple-900/20 blur-[150px] rounded-full pointer-events-none transition-opacity duration-1000 -translate-x-1/2 -translate-y-1/2 z-0",
              hasUnread ? "opacity-100" : "opacity-0"
           )} />
           
@@ -205,6 +205,7 @@ export function AppSidebar() {
           {/* Header */}
           <Popover>
             <PopoverTrigger asChild>
+
               <div 
                 className={cn(
                   "flex items-center border-b border-white/5 transition-all overflow-hidden cursor-pointer relative group",
@@ -218,29 +219,12 @@ export function AppSidebar() {
                     ? "opacity-100" // Visible (Fire Effect)
                     : "bg-purple-600/20 blur-3xl opacity-40" // Resting state: Static, weak glow
                 )}>
-                   {/* Fire layers - Only render if active */}
+                   {/* Static Glow Layers - Only render if active */}
                    {hasUnread && (
                       <>
-                        <div className="absolute inset-0 bg-purple-900/40 blur-[50px] animate-pulse-slow" /> 
-                        <div className="absolute inset-0 bg-purple-600/20 blur-[30px] animate-flicker mix-blend-screen" />
-                        <div className="absolute bottom-0 left-1/4 right-1/4 h-24 bg-purple-500/10 blur-[20px] animate-fire-rise rounded-t-full" />
-                        
-                        {/* Custom Styles for Fire Animation */}
-                        <style jsx>{`
-                          @keyframes flicker {
-                            0%, 100% { opacity: 0.3; transform: scale(1); }
-                            25% { opacity: 0.5; transform: scale(1.02); }
-                            50% { opacity: 0.25; transform: scale(0.98); }
-                            75% { opacity: 0.4; transform: scale(1.01); }
-                          }
-                          @keyframes fire-rise {
-                             0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
-                             50% { transform: translateY(-10px) scale(1.1); opacity: 0.3; }
-                          }
-                          .animate-flicker { animation: flicker 4s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
-                          .animate-fire-rise { animation: fire-rise 3s infinite ease-in-out; }
-                          .animate-pulse-slow { animation: pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-                        `}</style>
+                        <div className="absolute inset-0 bg-purple-900/20 blur-[60px]" /> 
+                        <div className="absolute inset-0 bg-purple-600/10 blur-[40px] mix-blend-screen" />
+                        <div className="absolute bottom-0 left-1/4 right-1/4 h-24 bg-purple-500/10 blur-[25px] rounded-t-full" />
                       </>
                    )}
                 </div>

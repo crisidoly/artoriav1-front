@@ -240,7 +240,7 @@ export default function KnowledgePage() {
 
   return (
     <div className="flex-1 space-y-8 p-8 min-h-full">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[1600px] 2xl:max-w-[2400px] mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

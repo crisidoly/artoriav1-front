@@ -554,11 +554,12 @@ export function ChatSidebar() {
     <>
       <aside 
         className={cn(
-          "flex flex-col h-[100dvh] bg-card/95 backdrop-blur-md transition-all duration-300 shadow-2xl relative w-full h-full"
+          "flex flex-col h-[100dvh] bg-black/60 backdrop-blur-xl transition-all duration-300 border-l border-white/20 shadow-none relative w-full h-full"
         )}
       >
+
         {/* Header with TTS Button */}
-        <div className="h-14 px-4 border-b border-border/50 flex items-center justify-between shrink-0 bg-gradient-to-r from-card to-card/80">
+        <div className="h-14 px-4 border-b border-white/15 flex items-center justify-between shrink-0 bg-transparent">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className={cn(
@@ -602,7 +603,7 @@ export function ChatSidebar() {
         </div>
 
         {/* Messages Area - NO HORIZONTAL SCROLL */}
-        <ScrollArea className="flex-1 bg-background/30">
+        <ScrollArea className="flex-1 bg-transparent">
           <div className="p-4 space-y-4">
             {messages.map((msg) => (
               <div 
@@ -633,11 +634,11 @@ export function ChatSidebar() {
 
                 {/* Message Bubble */}
                 <div className={cn(
-                  "rounded-2xl text-sm shadow-sm max-w-[85%] overflow-hidden group relative",
+                  "rounded-2xl text-sm shadow-sm max-w-[85%] overflow-hidden group relative backdrop-blur-md transition-all hover:shadow-md",
                   msg.role === 'assistant' 
-                    ? "bg-secondary/50 rounded-tl-sm border border-border/30" 
-                    : "bg-primary/20 rounded-tr-sm border border-primary/20",
-                  msg.type === 'thought' && "bg-secondary/20 italic border-dashed text-xs",
+                    ? "bg-white/5 text-gray-100 rounded-tl-sm border border-white/10" 
+                    : "bg-primary/20 text-white rounded-tr-sm border border-primary/20",
+                  msg.type === 'thought' && "bg-black/20 italic border-dashed text-xs text-gray-400",
                   msg.type === 'chart' && "bg-transparent border-0 shadow-none p-0",
                   msg.type === 'image' && "bg-transparent border-0 shadow-none p-0",
                   (msg.type !== 'chart' && msg.type !== 'image') && "p-3"
@@ -690,7 +691,7 @@ export function ChatSidebar() {
         </ScrollArea>
 
         {/* Input Area with Upload Button */}
-        <div className="p-3 border-t border-border/50 bg-card/80 shrink-0">
+        <div className="p-3 border-t border-white/15 bg-transparent shrink-0">
           <div className="flex items-end gap-2">
             {/* Upload Button */}
             <UploadModal />
@@ -706,8 +707,8 @@ export function ChatSidebar() {
                 disabled={!isConnected}
                 rows={1}
                 className={cn(
-                  "min-h-[44px] max-h-[120px] resize-none pr-20",
-                  "bg-secondary/50 border-border/50 focus-visible:ring-primary/50",
+                  "min-h-[44px] max-h-[120px] resize-none pr-20 rounded-xl",
+                  "bg-white/5 border-white/20 focus-visible:ring-primary/50 text-white placeholder:text-gray-500",
                   "scrollbar-thin scrollbar-thumb-primary/20"
                 )}
               />

@@ -110,12 +110,16 @@ export function BottomNav() {
                                 className="flex flex-col items-center justify-center gap-1 w-full h-full relative group"
                             >
                                 <div className={cn(
-                                    "p-3 rounded-full transition-all duration-300 transform group-active:scale-95",
+                                    "p-1.5 rounded-full transition-all duration-300 transform group-active:scale-95",
                                     isActive
                                         ? "bg-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.5)] -translate-y-4 border-4 border-[#09090b]"
                                         : "bg-white/5 text-muted-foreground"
                                 )}>
-                                    <Icon className={cn("h-6 w-6", isActive && "fill-current")} />
+                                    <img 
+                                        src="/logopng.png" 
+                                        alt="Chat" 
+                                        className={cn("h-10 w-10 object-contain", isActive && "drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]")} 
+                                    />
                                 </div>
                             </button>
                         );

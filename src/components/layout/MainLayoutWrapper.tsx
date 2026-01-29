@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 
 export function MainLayoutWrapper({ children }: { children: ReactNode }) {
   return (
-    <main className="h-full flex flex-col bg-background relative overflow-hidden">
+    <main className="h-full flex flex-col bg-transparent relative overflow-hidden">
       {/* 
          GLOBAL CHANGE: All pages now occupy full workspace height.
          Scroll management is delegated to individual page components

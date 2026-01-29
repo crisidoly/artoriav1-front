@@ -123,9 +123,10 @@ export default function ToolsPage() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full justify-center">
+      <div className="w-full max-w-[1600px] 2xl:max-w-[2400px] flex h-full">
       {/* Sidebar - Categories */}
-      <div className="w-64 border-r border-border bg-card/50 p-4 hidden lg:block">
+      <div className="w-64 border-r border-white/10 bg-black/20 backdrop-blur-md p-4 hidden lg:block rounded-l-2xl my-4 ml-4">
         <h2 className="text-lg font-bold text-primary-glow mb-4 flex items-center gap-2">
           <Wrench className="h-5 w-5" /> Categorias
         </h2>
@@ -135,7 +136,7 @@ export default function ToolsPage() {
             className={cn(
               "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all",
               selectedCategory === 'all'
-                ? "bg-primary/20 text-primary-glow"
+                ? "glass-card text-primary-glow"
                 : "text-muted-foreground hover:bg-white/5 hover:text-white"
             )}
           >
@@ -157,7 +158,7 @@ export default function ToolsPage() {
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all",
                   selectedCategory === category
-                    ? "bg-primary/20 text-primary-glow"
+                    ? "glass-card text-primary-glow"
                     : "text-muted-foreground hover:bg-white/5 hover:text-white"
                 )}
               >
@@ -191,7 +192,7 @@ export default function ToolsPage() {
             placeholder="Buscar ferramentas..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10 bg-secondary/50 border-white/10"
+            className="pl-10 glass-card bg-black/20"
           />
         </div>
 
@@ -200,7 +201,7 @@ export default function ToolsPage() {
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
-            className="w-full p-2 rounded-md bg-secondary/50 border border-white/10 text-sm"
+            className="w-full p-2 rounded-md glass-card text-sm"
           >
             <option value="all">Todas ({tools.length})</option>
             {categories.filter(c => c !== 'all').map(cat => (
@@ -224,7 +225,7 @@ export default function ToolsPage() {
                     key={tool.name}
                     onClick={() => setSelectedTool(tool)}
                     className={cn(
-                      "cursor-pointer transition-all border-white/5 hover:border-primary/30 hover:bg-primary/5",
+                      "cursor-pointer transition-all glass-card hover:bg-white/10",
                       isSelected && "border-primary bg-primary/10"
                     )}
                   >
@@ -258,7 +259,7 @@ export default function ToolsPage() {
           {/* Detail Panel */}
           <div className="w-80 hidden xl:block">
             {selectedTool ? (
-              <Card className="h-full border-white/5 bg-card/40">
+              <Card className="h-full glass-card bg-black/20">
                 <CardHeader>
                   <div className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center mb-3",
@@ -314,7 +315,7 @@ export default function ToolsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="h-full border-white/5 flex items-center justify-center">
+              <Card className="h-full glass-card flex items-center justify-center">
                 <CardContent className="text-center text-muted-foreground">
                   <Bot className="h-16 w-16 mx-auto mb-4 opacity-30" />
                   <p>Selecione uma ferramenta<br />para ver detalhes</p>
@@ -323,6 +324,7 @@ export default function ToolsPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

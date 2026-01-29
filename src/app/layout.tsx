@@ -1,5 +1,5 @@
+import Starfield from "@/components/effects/Starfield";
 import { WorkspaceLayout } from "@/components/layout/WorkspaceLayout";
-import Starfield from "@/components/ui/Starfield";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -12,6 +12,22 @@ export const metadata: Metadata = {
   title: "ArtorIA Workspace",
   description: "Next-Gen AI Agent Interface",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ArtorIA",
+  },
+  icons: {
+    apple: "/logopng.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // App-like feel
 };
 
 export default function RootLayout({

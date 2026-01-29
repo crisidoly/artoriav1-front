@@ -34,6 +34,11 @@ export function WorkspaceLayout({ children }: { children: React.ReactNode }) {
       <ResizablePanelGroup orientation="horizontal" className="flex-1 pb-16 lg:pb-0">
         {/* Main Workspace (Dashboard/Pages) */}
         <ResizablePanel defaultSize={60} minSize={30} className="bg-transparent relative">
+          {/* CHAT GLOW EFFECT: Light bleeding from the right side (where chat is) */}
+          {isSidebarOpen && (
+             <div className="absolute top-0 right-0 bottom-0 w-[500px] bg-gradient-to-l from-purple-900/20 via-transparent to-transparent pointer-events-none z-0" />
+          )}
+
           <MainLayoutWrapper>
             {children}
           </MainLayoutWrapper>
@@ -59,10 +64,10 @@ export function WorkspaceLayout({ children }: { children: React.ReactNode }) {
                 {/* Interaction Area (Chat + Canvas) */}
                 {/* Mobile: Full Screen Chat Overlay when open */}
                 <ResizablePanel 
-                    defaultSize={40} 
-                    minSize={25} 
+                    defaultSize={18} 
+                    minSize={15} 
                     className={cn(
-                        "glass-panel border-l border-white/5",
+                        "glass-panel border-l border-white/20 z-20",
                         // On mobile, if open, it takes over locally or we handle via absolute overlay in InteractionArea
                         // For now, ResizablePanel might be weird on mobile.
                         "hidden lg:block" 

@@ -2,7 +2,6 @@
 import {
     Activity,
     BarChart3,
-    Bot,
     Calendar,
     CheckSquare,
     Database,
@@ -26,6 +25,7 @@ import {
 
 export const MAIN_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Financeiro", href: "/finance", icon: TableProperties },
   { label: "Ferramentas", href: "/tools", icon: Wrench },
   { label: "Gerador de Imagens", href: "/images", icon: ImageIcon },
   { label: "Automações", href: "/plans", icon: Network },
@@ -44,9 +44,9 @@ export const GOOGLE_ITEMS = [
 ];
 
 export const AI_WORKFLOW_ITEMS = [
+  { label: "Visual Studio", href: "/studio/workflow", icon: Network },
   { label: "Base de Conhecimento", href: "/knowledge", icon: Database },
   { label: "ElevenLabs Voice", href: "/elevenlabs", icon: Mic },
-  { label: "Workflow Live", href: "/workflows", icon: Bot },
   { label: "Histórico", href: "/history", icon: BarChart3 },
 ];
 
